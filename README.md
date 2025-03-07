@@ -1,1 +1,1 @@
-# SCALE project interface from the reasoner to the ACT-UP model
+# SCALE project interface between the reasoner to the ACT-UP model
