@@ -17,8 +17,33 @@
 
 (define-constant +default-port+ 21952)
 
+(defun %run-model (parameters raw-data generate-raw-data-p)
+  (cond ((fboundp 'run-model)
+         (run-model parameters raw-data generate-raw-data-p))
+        (t (format t "~&parameters: ~:W~%raw-data: ~:W~%~:[do not ~;~]generate raw data~2%"
+                   parameters raw-data generate-raw-data-p)
+           "done")))
+
 (defun tcp-handler (stream)
-  (format t "~S~%" (read-line stream nil))
+  (labels ((respond (obj)
+             (encode-json obj stream)
+             (terpri stream)
+             (finish-output stream)
+             (return)))
+    (let ((line (read-line stream nil)))
+      (unless line
+        (vom:error "Empty line read from reasoner")
+        (respond "Error: empty line read"))
+      (let ((json (handler-case ()
+                    (error (e)
+                      (vom:error "can't correctly parse JSON: ~S" e)
+                      (respond (format nil "Error parsing or manipulating JSON: ~S, ~S" e line))))
+
+
+  (if-let ((line ))
+
+
+  (format t "~S~%" )
   (format stream "done~%")
   (finish-output stream))
 
