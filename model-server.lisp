@@ -16,6 +16,8 @@
 
 (define-constant +default-port+ 21952)
 
+(defparameter *data-function-name-package* 'CL-USER)
+
 (defun %run-model (parameters raw-data generate-raw-data-p)
   (vom:debug "Calling model on ~S ~S ~S" parameters raw-data generate-raw-data-p)
   (let ((result (cond ((fboundp 'run-model)
@@ -31,11 +33,16 @@
   (values (iter (for p :in (cdr (assoc :parameters model-data)))
                 (for n := (cdr (assoc :name p)))
                 (assert (stringp n))
-                (collect (cons (make-keyword (substitute #\- #\Space (string-upcase n)))
-                               (iter (for (k . v) :in p)
-                                     (assert (keywordp k))
-                                     (unless (eq k :name)
-                                       (nconcing (list k v)))))))
+                (setf n (make-keyword (substitute #\- #\Space (string-upcase n))))
+                (collect (cons n (iter (for (k . v) :in p)
+                                       (assert (keywordp k))
+                                       (when (and (eq k :value)
+                                                  (member n '(:utility :similarity)))
+                                         (setf v (iter (for (typ . fn) :in v)
+                                                       (nconcing (list typ (intern (string-upcase fn)
+                                                                                   *data-function-name-package*))))))
+                                       (unless (eq k :name)
+                                         (nconcing (list k v)))))))
           (cdr (assoc :raw-data model-data))
           (cdr (assoc :generate-raw-data model-data))))
 
