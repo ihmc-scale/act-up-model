@@ -1,15 +1,14 @@
 ;;;; Copyright 2025 Carnegie Mellon University
 
-(ql:quickload '(:cl-interpol :alexandria :iterate :cl-ppcre
-                :cl-json :usocket :uiop :vom)
+(ql:quickload '(:cl-interpol :alexandria :iterate :cl-json :usocket :uiop :vom)
               :silent t)
 
 (asdf:load-system :usocket-server)
 
 (defpackage :scale-act-up-interface
   (:nicknames :scale)
-  (:use :common-lisp :alexandria :iterate :ppcre :json :usocket)
-  (:export #:run))
+  (:use :common-lisp :alexandria :iterate :json :usocket)
+  (:export #:run #:run-model #:pget))
 
 (in-package :scale)
 
@@ -39,6 +38,9 @@
                                        (nconcing (list k v)))))))
           (cdr (assoc :raw-data model-data))
           (cdr (assoc :generate-raw-data model-data))))
+
+(defun pget (parameters name &optional (key :value))
+  (getf (cdr (assoc name parameters)) key))
 
 (defun process-line (line)
   (let ((json (decode-json-from-string line)))
@@ -82,51 +84,3 @@
       (sb-sys:interactive-interrupt ()
         (vom:info "Stopping SCALE model listener")
         (quit 0)))))
-
-
-
-#|
-((:MODELS
-  ((:NAME . "ACT-R")
-   (:PARAMETERS
-    ((:NAME . "noise") (:VALUE . 0.25) (:UNIT-OF-MEASURE)
-     (:PARAMETER-CLASS . "model") (:PARAMETER-SUB-CLASS . "architecture"))
-    ((:NAME . "temperature") (:VALUE . 1.0) (:UNIT-OF-MEASURE)
-     (:PARAMETER-CLASS . "model") (:PARAMETER-SUB-CLASS . "architecture"))
-    ((:NAME . "similarity")
-     (:VALUE (:INTEGER . "functionName") (:DOUBLE . "functionName"))
-     (:UNIT-OF-MEASURE) (:PARAMETER-CLASS . "model")
-     (:PARAMETER-SUB-CLASS . "knowledge"))
-    ((:NAME . "utility")
-     (:VALUE (:INTEGER . "functionName") (:DOUBLE . "functionName"))
-     (:UNIT-OF-MEASURE) (:PARAMETER-CLASS . "model")
-     (:PARAMETER-SUB-CLASS . "utility"))
-    ((:NAME . "decision") (:VALUE . "functionName") (:UNIT-OF-MEASURE)
-     (:PARAMETER-CLASS . "model") (:PARAMETER-SUB-CLASS . "procedure"))
-    ((:NAME . "init length") (:VALUE . 10) (:UNIT-OF-MEASURE)
-     (:PARAMETER-CLASS . "simulation") (:PARAMETER-SUB-CLASS . "simulation"))
-    ((:NAME . "run length") (:VALUE . 100) (:UNIT-OF-MEASURE)
-     (:PARAMETER-CLASS . "simulation") (:PARAMETER-SUB-CLASS . "simulation"))
-    ((:NAME . "run delay") (:VALUE . 1.0) (:UNIT-OF-MEASURE)
-     (:PARAMETER-CLASS . "simulation") (:PARAMETER-SUB-CLASS . "simulation"))
-    ((:NAME . "run count") (:VALUE . 100) (:UNIT-OF-MEASURE)
-     (:PARAMETER-CLASS . "simulation") (:PARAMETER-SUB-CLASS . "simulation"))
-    ((:NAME . "probability threshold") (:VALUE . 0.25) (:UNIT-OF-MEASURE)
-     (:PARAMETER-CLASS . "simulation") (:PARAMETER-SUB-CLASS . "policy"))
-    ((:NAME . "intensity threshold") (:VALUE . 1) (:UNIT-OF-MEASURE)
-     (:PARAMETER-CLASS . "simulation") (:PARAMETER-SUB-CLASS . "policy"))
-    ((:NAME . "intensity standard deviation") (:VALUE . 1.0) (:UNIT-OF-MEASURE)
-     (:PARAMETER-CLASS . "simulation") (:PARAMETER-SUB-CLASS . "environment")))
-   (:RAW-DATA . "jsonFormattedRawData") (:GENERATE-RAW-DATA))
-  ((:NAME . "ACT-R")
-   (:PARAMETERS
-    ((:NAME . "noise") (:VALUE . 0.25) (:UNIT-OF-MEASURE)
-     (:PARAMETER-CLASS . "model") (:PARAMETER-SUB-CLASS . "architecture"))
-    ((:NAME . "temperature") (:VALUE . 1.0) (:UNIT-OF-MEASURE)
-     (:PARAMETER-CLASS . "model") (:PARAMETER-SUB-CLASS . "architecture"))
-    ((:NAME . "similarity")
-     (:VALUE (:INTEGER . "functionName") (:DOUBLE . "functionName"))
-     (:UNIT-OF-MEASURE) (:PARAMETER-CLASS . "model")
-     (:PARAMETER-SUB-CLASS . "knowledge")))
-   (:RAW-DATA . "jsonFormattedRawData") (:GENERATE-RAW-DATA))))
-|#
