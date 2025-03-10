@@ -8,7 +8,7 @@
 (defpackage :scale-act-up-interface
   (:nicknames :scale)
   (:use :common-lisp :alexandria :iterate :json :usocket)
-  (:export #:run #:run-model #:pget))
+  (:export #:run #:run-model #:pget #:*data-function-name-package*))
 
 (in-package :scale)
 
@@ -60,10 +60,11 @@
           (collect (and (string-equal (cdr (assoc :name m)) "ACT-R")
                         (multiple-value-bind (params raw-data generate-raw-data-p)
                             (restructure-json m)
-                          (let ((result (encode-json-to-string
-                                         (%run-model params raw-data generate-raw-data-p))))
-                            (vom:debug "Returning ~S" result)
-                            result)))))))
+                          (%run-model params raw-data generate-raw-data-p)))
+            :into result)
+          (finally (let ((encoded-result (encode-json-to-string result)))
+                     (vom:debug "Returning ~S" encoded-result)
+                     (return encoded-result))))))
 
 (defun tcp-handler (stream)
   (iter (for line := (read-line stream nil '#0=#:eof))

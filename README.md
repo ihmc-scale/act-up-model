@@ -164,8 +164,8 @@ the second is similar, but with only the first model section of that example dat
 In a second shell use netcat to send the sample data:
 
     dfm) dfm@carlisle:~/w/scale/act-up-interface$ cat sample.json | nc 127.0.0.1 21952
-    ("done" "done")
-    ("done")
+    ["done","done"]
+    ["done"]
 
 At present, in lieu of the real model, there will also be some output spewed into the first shell
 describing what it has seen, mostly as Lisp data, though a little text, too, something like
