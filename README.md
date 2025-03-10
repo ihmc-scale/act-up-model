@@ -91,12 +91,12 @@ To run this a suitable Common Lisp implementation (SBCL is recommended) and Quic
 Installing SBCL is easy on a variety of OSes, so long as a pre-built binary is used.
 Lisp and QuickLisp only need to be installed once.
 
-For installing SBCL see [https://www.sbcl.org/gett(https://www.sbcl.org/getting.html). It's pretty easy, but
+For installing SBCL see [https://www.sbcl.org/getting.html](https://www.sbcl.org/getting.html). It's pretty easy, but
 on Linux I (dfm) should be able to help, and probably Macintosh, too, though I've not done it there myself
 in many years; for Windows, though, I'm unlikely to be much help, never using it myself.
 
 Once you have a Lisp implementation installed you need to install QuickLisp, which is near trivial.
-See [https://www.quicklisp.org/beta/]{https://www.quicklisp.org/beta/) for details (don't worry that
+See [https://www.quicklisp.org/beta/](https://www.quicklisp.org/beta/) for details (don't worry that
 it says "beta," it's been around and stable for a very long time). If necessary, I can easily help.
 
 If this is too much I could undoubtedly put together a docker thingie, though that seems like overkill for the purpose.
