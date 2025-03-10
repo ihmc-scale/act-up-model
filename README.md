@@ -114,6 +114,8 @@ To make it more loquacious, spitting out lots of debugging status and the like, 
 
     ./debug.sh
 
+To kill the thing just use control-C; I should come down reasonably graciously if you've used SBCL, maybe a little bit less so in other Lisp implementations.
+
 If you want to use a different port just supply the number as the sole argument to `run.sh` or `debug.sh`; for example, to use port 9999
 
     ./run.sh 9999
