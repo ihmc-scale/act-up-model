@@ -13,7 +13,7 @@
 
 (in-package :scale)
 
-(vom:config t :info)
+(vom:config t :debug)
 
 (define-constant +default-port+ 21952)
 
@@ -26,38 +26,52 @@
 
 (defun tcp-handler (stream)
   (labels ((respond (obj)
-             (encode-json obj stream)
-             (terpri stream)
+             (handler-case (let ((response (encode-json-to-string obj)))
+                             (vom:debug "Encode response ~S" response)
+                             (format stream "~A~%" response))
+               (error (e)
+                 (vom:error "Error encoding JSON or writing to TCP stream (~S)" obj)
+                 (encode-json #?'"write error"' stream)
+                 (terpri stream)))
              (finish-output stream)
-             (return)))
-    (let ((line (read-line stream nil)))
-      (unless line
-        (vom:error "Empty line read from reasoner")
-        (respond "Error: empty line read"))
-      (let ((json (handler-case ()
+             (return-from tcp-handler)))
+    (respond "foo")
+    (macrolet ((with-error-handled ((msg ret) &body body)
+                 `(handler-case (progn ,@body)
                     (error (e)
-                      (vom:error "can't correctly parse JSON: ~S" e)
-                      (respond (format nil "Error parsing or manipulating JSON: ~S, ~S" e line))))
+                      (vom:error "~A ~S" ,msg e)
+                      #+SBCL (sb-debug:print-backtrace)
+                      (respond ,ret)))))
+      (let ((line (with-error-handled ("error reading TCP stream" "read error")
+                    (read-line stream))))
+        (vom:debug "Read line ~S" line)
+        (let ((json (with-error-handled ("error parsing JSON" "JSON parse error")
+                      (decode-json-from-string line))))
+          (vom:debug "Parsed JSON ~S" json)
+          (multiple-value-bind (params raw-data generate-raw-data-p)
+              (with-error-handled ("error restructuring JSON" "unexpected input data format")
+                (restructure-json json))
+            (vom:debug "Restructured JSON ~S (~S) ~A"
+                       params raw-data generate-raw-data-p)
+            (let ((result (with-error-handled ("error running model" "model error")
+                            (%run-model params raw-data generate-raw-data-p))))
+              (vom:debug "Model returned ~S" result)
+              (respond result))))))))
 
-
-  (if-let ((line ))
-
-
-  (format t "~S~%" )
-  (format stream "done~%")
-  (finish-output stream))
-
-(defun run (&optional (port +default-port+))
+(defun run (&optional(interactive (member :swank *features*)) (port +default-port+))
   (vom:info "Starting SCALE model listener on port ~D" port)
-  (handler-case (socket-server nil port 'tcp-handler)
-    (error (e)
-      (vom:error "~S" e)
-      #+SBCL (sb-debug:print-backtrace)
-      (uiop:quit 1))
-    #+SBCL
-    (sb-sys:interactive-interrupt ()
-      (vom:info "Stopping SCALE model listener")
-      (uiop:quit 0 t))))
+  (labels ((quit (n)
+             (unless interactive
+               (uiop:quit n))))
+    (handler-case (socket-server nil port 'tcp-handler)
+      (error (e)
+        (vom:error "top level error ~S" e)
+        #+SBCL (sb-debug:print-backtrace)
+        (quit 1))
+      #+SBCL
+      (sb-sys:interactive-interrupt ()
+        (vom:info "Stopping SCALE model listener")
+        (quit 0)))))
 
 
 
