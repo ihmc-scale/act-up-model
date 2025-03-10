@@ -27,8 +27,8 @@ The `scale:run-model` function should take three arguments:
 
 * `generate-raw-data-p`, a generalized Boolean corresponding to the value provided under the similiar tag by the reasoner; again I don't understand this, but presume being just a Boolean it is unlikely to change.
 
-The value returned by `scale:model-function` will be converted to JSON and written back on the TCP stream to the reasoner.
-As the output format appears still to be in flux, for now it is recommended that `scale:model-function` simply return a string; we'll update this when things become clearer.
+The value returned by `scale:run-model` will be converted to JSON and written back on the TCP stream to the reasoner.
+As the output format appears still to be in flux, for now it is recommended that `scale:run-model` simply return a string; we'll update this when things become clearer.
 
 The `parameters` is an a-list mapping parameter names to p-lists. The parameter names are provided as keywords. The p-lists map attributes of the parameter to values.
 Thus, you can get the `:value` of the `:noise` parameter by doing
@@ -79,7 +79,7 @@ Here's an example of the parameters value resulting from first model value provi
      (:INTENSITY-STANDARD-DEVIATION :VALUE 1.0 :UNIT-OF-MEASURE NIL
       :PARAMETER-CLASS "simulation" :PARAMETER-SUB-CLASS "environment"))
 
-Note that if no `scale:model-function` has been defined, by default the various values of the input arguments will be printed in the Lisp listener.
+Note that if no `scale:run-model` has been defined, by default the various values of the input arguments will be printed in the Lisp listener.
 
 Note that this code has only been test in SBCL, though I believe it should run fine in CCL, or any other Common Lisp implementation that supports `usocket`.
 
