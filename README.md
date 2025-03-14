@@ -19,13 +19,11 @@ essentially a stub value, simply a constant JSON string.
 First load into Lisp the source file `model-server.lisp`. Then define a function, `scale:run-model`. Note that `model-server.lisp` does need to be loaded
 first so that the symbol `scale:run-model` is available.
 
-The `scale:run-model` function should take three arguments:
+The `scale:run-model` function should take twoarguments:
 
 * `parameters`, a list structure described further below
 
 * ``raw-data`, a Lisp formatted version of what is provided under this tag by the reasoner; I don't really know what this is all about, so am doing no further formatting on this at present; we may choose to change this later
-
-* `generate-raw-data-p`, a generalized Boolean corresponding to the value provided under the similiar tag by the reasoner; again I don't understand this, but presume being just a Boolean it is unlikely to change.
 
 The value returned by `scale:run-model` will be converted to JSON and written back on the TCP stream to the reasoner.
 As the output format appears still to be in flux, for now it is recommended that `scale:run-model` simply return a string; we'll update this when things become clearer.
@@ -48,6 +46,7 @@ by setting the value of the `scale:*data-function-name-package*` variable to a d
 Christian will be working.
 
 Here's an example of the parameters value resulting from first model value provided in `reasoner_to_model_input_spec.json`:
+
 
     ((:NOISE :VALUE 0.25 :UNIT-OF-MEASURE NIL :PARAMETER-CLASS "model"
       :PARAMETER-SUB-CLASS "architecture")
@@ -81,7 +80,7 @@ Here's an example of the parameters value resulting from first model value provi
 
 Note that if no `scale:run-model` has been defined, by default the various values of the input arguments will be printed in the Lisp listener.
 
-Note that this code has only been test in SBCL, though I believe it should run fine in CCL, or any other Common Lisp implementation that supports `usocket`.
+Note that this code has only been tested in SBCL, though I believe it should run fine in CCL, or any other Common Lisp implementation that supports `usocket`.
 
 ## Running this code
 
@@ -109,14 +108,15 @@ Once it prints a line like
 
     <INFO> [12:16:43] scale-act-up-interface - Starting SCALE model listener on port 21952
 
-you should be ready to go. Once Christian has supplied the real model this may need a little modification; we'll see.
+you should be ready to go; note that it will take a few seconds to get itself ready to listen for connections.
+Once Christian has supplied the real model this may need a little modification; we'll see.
 To make it more loquacious, spitting out lots of debugging status and the like, instead run
 
     ./debug.sh
 
-In Windows these shells won't work, and you'll have to make a suitable replacement. I doubt it would be difficult, but I'm clueless about all things Windows.
+In Windows these shell scripts won't work, and you'll have to make a suitable replacement. I doubt it would be difficult, but I'm clueless about all things Windows.
 
-To kill the thing just use control-C; it should come down reasonably gracefully if you've used SBCL, maybe with a little less grace in other Lisp implementations.
+To kill the thing just use control-C; it should come down reasonably gracefully if you've used SBCL, perhaps with a little less grace in other Lisp implementations.
 
 If you want to use a different port just supply the number as the sole argument to `run.sh` or `debug.sh`; for example, to use port 9999
 
@@ -205,7 +205,6 @@ describing what it has seen, mostly as Lisp data, though a little text, too, som
                  (:INTENSITY-STANDARD-DEVIATION :VALUE 1.0 :UNIT-OF-MEASURE NIL
                   :PARAMETER-CLASS "simulation" :PARAMETER-SUB-CLASS "environment"))
     raw-data: "jsonFormattedRawData"
-    do not generate raw data
 
     parameters: ((:NOISE :VALUE 0.25 :UNIT-OF-MEASURE NIL :PARAMETER-CLASS "model"
                   :PARAMETER-SUB-CLASS "architecture")
@@ -217,7 +216,6 @@ describing what it has seen, mostly as Lisp data, though a little text, too, som
                   :UNIT-OF-MEASURE NIL :PARAMETER-CLASS "model"
                   :PARAMETER-SUB-CLASS "knowledge"))
     raw-data: "jsonFormattedRawData"
-    do not generate raw data
 
     parameters: ((:NOISE :VALUE 0.25 :UNIT-OF-MEASURE NIL :PARAMETER-CLASS "model"
                   :PARAMETER-SUB-CLASS "architecture")
@@ -250,7 +248,6 @@ describing what it has seen, mostly as Lisp data, though a little text, too, som
                  (:INTENSITY-STANDARD-DEVIATION :VALUE 1.0 :UNIT-OF-MEASURE NIL
                   :PARAMETER-CLASS "simulation" :PARAMETER-SUB-CLASS "environment"))
     raw-data: "jsonFormattedRawData"
-    do not generate raw data
 
 At some point we should think about how to deal with errors. For now, when there is an error in the interface code
-a JSON string describing it should be returned.
+it w9ill attempt to return a JSON string describing it.

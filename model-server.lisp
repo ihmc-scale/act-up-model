@@ -18,13 +18,12 @@
 
 (defparameter *data-function-name-package* 'CL-USER)
 
-(defun %run-model (parameters raw-data generate-raw-data-p)
-  (vom:debug "Calling model on ~S ~S ~S" parameters raw-data generate-raw-data-p)
+(defun %run-model (parameters raw-data)
+  (vom:debug "Calling model on ~S ~S ~S" parameters raw-data)
   (let ((result (cond ((fboundp 'run-model)
-                       (funcall (symbol-function 'run-model)
-                                parameters raw-data generate-raw-data-p))
-                      (t (format t "~&parameters: ~:W~%raw-data: ~:W~%~:[do not ~;~]generate raw data~2%"
-                                 parameters raw-data generate-raw-data-p)
+                       (funcall (symbol-function 'run-model) parameters raw-data))
+                      (t (format t "~&parameters: ~:W~%raw-data: ~:W~2%"
+                                 parameters raw-data)
                          "done"))))
     (vom:debug "Model returned ~S" result)
     result))
@@ -43,8 +42,7 @@
                                                                                    *data-function-name-package*))))))
                                        (unless (eq k :name)
                                          (nconcing (list k v)))))))
-          (cdr (assoc :raw-data model-data))
-          (cdr (assoc :generate-raw-data model-data))))
+          (cdr (assoc :raw-data model-data))))
 
 (defun pget (parameters name &optional (key :value))
   (getf (cdr (assoc name parameters)) key))
@@ -58,9 +56,8 @@
     (vom:debug "Processing models ~S" json)
     (iter (for m :in json)
           (collect (and (string-equal (cdr (assoc :name m)) "ACT-R")
-                        (multiple-value-bind (params raw-data generate-raw-data-p)
-                            (restructure-json m)
-                          (%run-model params raw-data generate-raw-data-p)))
+                        (multiple-value-bind (params raw-data) (restructure-json m)
+                          (%run-model params raw-data)))
             :into result)
           (finally (let ((encoded-result (encode-json-to-string result)))
                      (vom:debug "Returning ~S" encoded-result)
