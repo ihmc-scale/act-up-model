@@ -27,13 +27,15 @@
 
 (defun %run-model (parameters raw-data)
   (vom:debug "Calling model on ~S ~S ~S" parameters raw-data)
-  (let ((result (cond ((fboundp 'run-model)
-                       (funcall (symbol-function 'run-model) parameters raw-data))
-                      (t (format t "~&parameters: ~:W~%raw-data: ~:W~2%"
-                                 parameters raw-data)
-                         (read-file-form (merge-pathnames +output-sample-filename+ *pathname-defaults*))))))
-    (vom:debug "Model returned ~S" result)
-    ;; canonicalizeu result into a list of lists
+  (multiple-value-bind (result name)
+      (cond ((fboundp 'run-model)
+             (funcall (symbol-function 'run-model) parameters raw-data))
+            (t (format t "~&parameters: ~:W~%raw-data: ~:W~2%" parameters raw-data)
+               (values (read-file-form (merge-pathnames +output-sample-filename+
+                                                        *pathname-defaults*))
+                       nil)))
+    (vom:debug "Model returned (~A) ~S" name result)
+    ;; canonicalize result into a list of lists
     (when (arrayp result)
       (setf result
             (case (array-rank result)
@@ -46,7 +48,7 @@
                                    (collect x))))))
               (t (error "Don't know how to process a ~D dimensional array for return to reasoner"
                         (array-rank result))))))
-    (mapcar (lambda (x) (coerce x 'list)) result)))
+    (values (mapcar (lambda (x) (coerce x 'list)) result) name)))
 
 (defun restructure-input (model-data)
   (values (iter (for p :in (cdr (assoc :parameters model-data)))
@@ -88,17 +90,21 @@
     (assert (listp json))
     (vom:debug "Processing models ~S" json)
     (iter (for m :in json)
-          (collect (and (string-equal (cdr (assoc :name m)) "ACT-R")
-                        (multiple-value-bind (params raw-data) (restructure-input m)
-                          `((:name . "ACT-R")
-                            (:behavior . #(((:name . ,+default-behavior-name+)
-                                            (:runs ,@(restructure-output (%run-model params raw-data)))))))))
+          (unless (and (string-equal (cdr (assoc :name m)) "ACT-R"))
+            (collect nil :into results)
+            (next-iteration))
+          (for (values runs name) := (multiple-value-bind (params raw-data)
+                                         (restructure-input m)
+                                       (%run-model params raw-data)))
+          (collect `((:name . "ACT-R")
+                     (:behavior . #(((:name . ,(or name +default-behavior-name+))
+                                     (:runs ,@(restructure-output runs))))))
             :into results)
-          (finally (setf results `((:models . ,results)))
-                   (:_ results)
-                   (let ((encoded-result (encode-json-to-string results)))
-                     (vom:debug "Returning ~S" encoded-result)
-                     (return encoded-result))))))
+          (finally (let ((result `((:models . #(,@results)))))
+                     (vom:debug "Encoding ~S" result)
+                     (let ((encoded-result (encode-json-to-string result)))
+                       (vom:debug "Returning ~S" encoded-result)
+                       (return encoded-result)))))))
 
 (defun tcp-handler (stream)
   (iter (for line := (read-line stream nil '#0=#:eof))
