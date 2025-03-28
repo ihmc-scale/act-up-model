@@ -165,26 +165,16 @@ If you want to use a different port just supply the number as the sole argument 
 
 Here's an example of testing this stuff using `netcat` to fill in for the reasoner. Note that there is a file, `input-sample.json`, in this repo.
 This contains two JSON values, each on a single line. The first is the example from `reasoner_to_model_input_spec.json`, reduced to a single line;
-the second is similar, but with only the first model section of that example data. To test this in one shell start the interface code
+the second is similar, but with only the first model section of that example data. We send this to the TCP server running on Koalemos:
 
-    (dfm) dfm@carlisle:~/w/scale/act-up-interface$ ./run.sh
-    This is SBCL 2.4.5, an implementation of ANSI Common Lisp.
-    More information about SBCL is available at <http://www.sbcl.org/>.
+    (dfm) dfm@carlisle:~/w/scale/act-up-interface$ cat input-sample.json | nc koalemos.lan.cmu.edu 21952
 
-    SBCL is free software, provided as is, with absolutely no warranty.
-    It is mostly in the public domain; some portions are provided under
-    BSD-style licenses.  See the CREDITS and COPYING files in the
-    distribution for more information.
-    WARNING: :SB-EVAL is no longer present in *FEATURES*
-      <INFO> [12:38:30] scale-act-up-interface - Starting SCALE model listener on port 21952
+This prints two lines of JSON, as follows. Since these are all on one line they are difficult to read. Following this I will copy one of them more tidily formatted. Note also that these are currently constant return values since the real ACT-UP model is not yet hooked up; this is just for testing the interface:
 
-In a second shell use netcat to send the sample data:
+    {"models":[{"name":"ACT-R","behavior":[{"name":"evacuate/stay","runs":[[[{"name":"decision","value":1.0,"unitOfMeasure":"double","outputClass":"observable","outputSubClass":"action"},{"name":"evacuation_message","value":1.0,"unitOfMeasure":"double","outputClass":"observable","outputSubClass":"context"},{"name":"probability","value":0.32606483,"unitOfMeasure":"double","outputClass":"observable","outputSubClass":"context"},{"name":"intensity","value":2,"unitOfMeasure":"double","outputClass":"observable","outputSubClass":"context"},{"name":"landing","value":0.0,"unitOfMeasure":"double","outputClass":"observable","outputSubClass":"outcome"},{"name":"damage","value":0,"unitOfMeasure":"double","outputClass":"observable","outputSubClass":"outcome"},{"name":"utility","value":-5,"unitOfMeasure":"double","outputClass":"internal","outputSubClass":"utility"}],[{"name":"decision","value":0.0,"unitOfMeasure":"double","outputClass":"observable","outputSubClass":"action"},{"name":"evacuation_message","value":0.0,"unitOfMeasure":"double","outputClass":"observable","outputSubClass":"context"},{"name":"probability","value":0.8650311,"unitOfMeasure":"double","outputClass":"observable","outputSubClass":"context"},{"name":"intensity","value":0,"unitOfMeasure":"double","outputClass":"observable","outputSubClass":"context"},{"name":"landing","value":1.0,"unitOfMeasure":"double","outputClass":"observable","outputSubClass":"outcome"},{"name":"damage","value":3,"unitOfMeasure":"double","outputClass":"observable","outputSubClass":"outcome"},{"name":"utility","value":-3,"unitOfMeasure":"double","outputClass":"internal","outputSubClass":"utility"}],[{"name":"decision","value":0.0,"unitOfMeasure":"double","outputClass":"observable","outputSubClass":"action"},{"name":"evacuation_message","value":0.0,"unitOfMeasure":"double","outputClass":"observable","outputSubClass":"context"},{"name":"probability","value":0.005523855,"unitOfMeasure":"double","outputClass":"observable","outputSubClass":"context"},{"name":"intensity","value":1,"unitOfMeasure":"double","outputClass":"observable","outputSubClass":"context"},{"name":"landing","value":0.0,"unitOfMeasure":"double","outputClass":"observable","outputSubClass":"outcome"},{"name":"damage","value":0,"unitOfMeasure":"double","outputClass":"observable","outputSubClass":"outcome"},{"name":"utility","value":5,"unitOfMeasure":"double","outputClass":"internal","outputSubClass":"utility"}],[{"name":"decision","value":0.0,"unitOfMeasure":"double","outputClass":"observable","outputSubClass":"action"},{"name":"evacuation_message","value":1.0,"unitOfMeasure":"double","outputClass":"observable","outputSubClass":"context"},{"name":"probability","value":0.5493901,"unitOfMeasure":"double","outputClass":"observable","outputSubClass":"context"},{"name":"intensity","value":4,"unitOfMeasure":"double","outputClass":"observable","outputSubClass":"context"},{"name":"landing","value":0.0,"unitOfMeasure":"double","outputClass":"observable","outputSubClass":"outcome"},{"name":"damage","value":5,"unitOfMeasure":"double","outputClass":"observable","outputSubClass":"outcome"},{"name":"utility","value":0,"unitOfMeasure":"double","outputClass":"internal","outputSubClass":"utility"}],[{"name":"decision","value":0.0,"unitOfMeasure":"double","outputClass":"observable","outputSubClass":"action"},{"name":"evacuation_message","value":1.0,"unitOfMeasure":"double","outputClass":"observable","outputSubClass":"context"},{"name":"probability","value":0.28204924,"unitOfMeasure":"double","outputClass":"observable","outputSubClass":"context"},{"name":"intensity","value":4,"unitOfMeasure":"double","outputClass":"observable","outputSubClass":"context"},{"name":"landing","value":0.0,"unitOfMeasure":"double","outputClass":"observable","outputSubClass":"outcome"},{"name":"damage","value":1,"unitOfMeasure":"double","outputClass":"observable","outputSubClass":"outcome"},{"name":"utility","value":4,"unitOfMeasure":"double","outputClass":"internal","outputSubClass":"utility"}]],[[{"name":"decision","value":1.0,"unitOfMeasure":"double","outputClass":"observable","outputSubClass":"action"},{"name":"evacuation_message","value":1.0,"unitOfMeasure":"double","outputClass":"observable","outputSubClass":"context"},{"name":"probability","value":0.46812302,"unitOfMeasure":"double","outputClass":"observable","outputSubClass":"context"},{"name":"intensity","value":1,"unitOfMeasure":"double","outputClass":"observable","outputSubClass":"context"},{"name":"landing","value":0.0,"unitOfMeasure":"double","outputClass":"observable","outputSubClass":"outcome"},{"name":"damage","value":0,"unitOfMeasure":"double","outputClass":"observable","outputSubClass":"outcome"},{"name":"utility","value":-5,"unitOfMeasure":"double","outputClass":"internal","outputSubClass":"utility"}],[{"name":"decision","value":0.0,"unitOfMeasure":"double","outputClass":"observable","outputSubClass":"action"},{"name":"evacuation_message","value":0.0,"unitOfMeasure":"double","outputClass":"observable","outputSubClass":"context"},{"name":"probability","value":0.0062158704,"unitOfMeasure":"double","outputClass":"observable","outputSubClass":"context"},{"name":"intensity","value":3,"unitOfMeasure":"double","outputClass":"observable","outputSubClass":"context"},{"name":"landing","value":0.0,"unitOfMeasure":"double","outputClass":"observable","outputSubClass":"outcome"},{"name":"damage","value":2,"unitOfMeasure":"double","outputClass":"observable","outputSubClass":"outcome"},{"name":"utility","value":3,"unitOfMeasure":"double","outputClass":"internal","outputSubClass":"utility"}],[{"name":"decision","value":0.0,"unitOfMeasure":"double","outputClass":"observable","outputSubClass":"action"},{"name":"evacuation_message","value":1.0,"unitOfMeasure":"double","outputClass":"observable","outputSubClass":"context"},{"name":"probability","value":0.9267006,"unitOfMeasure":"double","outputClass":"observable","outputSubClass":"context"},{"name":"intensity","value":1,"unitOfMeasure":"double","outputClass":"observable","outputSubClass":"context"},{"name":"landing","value":1.0,"unitOfMeasure":"double","outputClass":"observable","outputSubClass":"outcome"},{"name":"damage","value":2,"unitOfMeasure":"double","outputClass":"observable","outputSubClass":"outcome"},{"name":"utility","value":-2,"unitOfMeasure":"double","outputClass":"internal","outputSubClass":"utility"}],[{"name":"decision","value":1.0,"unitOfMeasure":"double","outputClass":"observable","outputSubClass":"action"},{"name":"evacuation_message","value":1.0,"unitOfMeasure":"double","outputClass":"observable","outputSubClass":"context"},{"name":"probability","value":0.4891229,"unitOfMeasure":"double","outputClass":"observable","outputSubClass":"context"},{"name":"intensity","value":2,"unitOfMeasure":"double","outputClass":"observable","outputSubClass":"context"},{"name":"landing","value":0.0,"unitOfMeasure":"double","outputClass":"observable","outputSubClass":"outcome"},{"name":"damage","value":3,"unitOfMeasure":"double","outputClass":"observable","outputSubClass":"outcome"},{"name":"utility","value":-2,"unitOfMeasure":"double","outputClass":"internal","outputSubClass":"utility"}],[{"name":"decision","value":0.0,"unitOfMeasure":"double","outputClass":"observable","outputSubClass":"action"},{"name":"evacuation_message","value":0.0,"unitOfMeasure":"double","outputClass":"observable","outputSubClass":"context"},{"name":"probability","value":0.7557405,"unitOfMeasure":"double","outputClass":"observable","outputSubClass":"context"},{"name":"intensity","value":0,"unitOfMeasure":"double","outputClass":"observable","outputSubClass":"context"},{"name":"landing","value":1.0,"unitOfMeasure":"double","outputClass":"observable","outputSubClass":"outcome"},{"name":"damage","value":0,"unitOfMeasure":"double","outputClass":"observable","outputSubClass":"outcome"},{"name":"utility","value":0,"unitOfMeasure":"double","outputClass":"internal","outputSubClass":"utility"}]]]}]},{"name":"ACT-R","behavior":[{"name":"evacuate/stay","runs":[[[{"name":"decision","value":1.0,"unitOfMeasure":"double","outputClass":"observable","outputSubClass":"action"},{"name":"evacuation_message","value":1.0,"unitOfMeasure":"double","outputClass":"observable","outputSubClass":"context"},{"name":"probability","value":0.32606483,"unitOfMeasure":"double","outputClass":"observable","outputSubClass":"context"},{"name":"intensity","value":2,"unitOfMeasure":"double","outputClass":"observable","outputSubClass":"context"},{"name":"landing","value":0.0,"unitOfMeasure":"double","outputClass":"observable","outputSubClass":"outcome"},{"name":"damage","value":0,"unitOfMeasure":"double","outputClass":"observable","outputSubClass":"outcome"},{"name":"utility","value":-5,"unitOfMeasure":"double","outputClass":"internal","outputSubClass":"utility"}],[{"name":"decision","value":0.0,"unitOfMeasure":"double","outputClass":"observable","outputSubClass":"action"},{"name":"evacuation_message","value":0.0,"unitOfMeasure":"double","outputClass":"observable","outputSubClass":"context"},{"name":"probability","value":0.8650311,"unitOfMeasure":"double","outputClass":"observable","outputSubClass":"context"},{"name":"intensity","value":0,"unitOfMeasure":"double","outputClass":"observable","outputSubClass":"context"},{"name":"landing","value":1.0,"unitOfMeasure":"double","outputClass":"observable","outputSubClass":"outcome"},{"name":"damage","value":3,"unitOfMeasure":"double","outputClass":"observable","outputSubClass":"outcome"},{"name":"utility","value":-3,"unitOfMeasure":"double","outputClass":"internal","outputSubClass":"utility"}],[{"name":"decision","value":0.0,"unitOfMeasure":"double","outputClass":"observable","outputSubClass":"action"},{"name":"evacuation_message","value":0.0,"unitOfMeasure":"double","outputClass":"observable","outputSubClass":"context"},{"name":"probability","value":0.005523855,"unitOfMeasure":"double","outputClass":"observable","outputSubClass":"context"},{"name":"intensity","value":1,"unitOfMeasure":"double","outputClass":"observable","outputSubClass":"context"},{"name":"landing","value":0.0,"unitOfMeasure":"double","outputClass":"observable","outputSubClass":"outcome"},{"name":"damage","value":0,"unitOfMeasure":"double","outputClass":"observable","outputSubClass":"outcome"},{"name":"utility","value":5,"unitOfMeasure":"double","outputClass":"internal","outputSubClass":"utility"}],[{"name":"decision","value":0.0,"unitOfMeasure":"double","outputClass":"observable","outputSubClass":"action"},{"name":"evacuation_message","value":1.0,"unitOfMeasure":"double","outputClass":"observable","outputSubClass":"context"},{"name":"probability","value":0.5493901,"unitOfMeasure":"double","outputClass":"observable","outputSubClass":"context"},{"name":"intensity","value":4,"unitOfMeasure":"double","outputClass":"observable","outputSubClass":"context"},{"name":"landing","value":0.0,"unitOfMeasure":"double","outputClass":"observable","outputSubClass":"outcome"},{"name":"damage","value":5,"unitOfMeasure":"double","outputClass":"observable","outputSubClass":"outcome"},{"name":"utility","value":0,"unitOfMeasure":"double","outputClass":"internal","outputSubClass":"utility"}],[{"name":"decision","value":0.0,"unitOfMeasure":"double","outputClass":"observable","outputSubClass":"action"},{"name":"evacuation_message","value":1.0,"unitOfMeasure":"double","outputClass":"observable","outputSubClass":"context"},{"name":"probability","value":0.28204924,"unitOfMeasure":"double","outputClass":"observable","outputSubClass":"context"},{"name":"intensity","value":4,"unitOfMeasure":"double","outputClass":"observable","outputSubClass":"context"},{"name":"landing","value":0.0,"unitOfMeasure":"double","outputClass":"observable","outputSubClass":"outcome"},{"name":"damage","value":1,"unitOfMeasure":"double","outputClass":"observable","outputSubClass":"outcome"},{"name":"utility","value":4,"unitOfMeasure":"double","outputClass":"internal","outputSubClass":"utility"}]],[[{"name":"decision","value":1.0,"unitOfMeasure":"double","outputClass":"observable","outputSubClass":"action"},{"name":"evacuation_message","value":1.0,"unitOfMeasure":"double","outputClass":"observable","outputSubClass":"context"},{"name":"probability","value":0.46812302,"unitOfMeasure":"double","outputClass":"observable","outputSubClass":"context"},{"name":"intensity","value":1,"unitOfMeasure":"double","outputClass":"observable","outputSubClass":"context"},{"name":"landing","value":0.0,"unitOfMeasure":"double","outputClass":"observable","outputSubClass":"outcome"},{"name":"damage","value":0,"unitOfMeasure":"double","outputClass":"observable","outputSubClass":"outcome"},{"name":"utility","value":-5,"unitOfMeasure":"double","outputClass":"internal","outputSubClass":"utility"}],[{"name":"decision","value":0.0,"unitOfMeasure":"double","outputClass":"observable","outputSubClass":"action"},{"name":"evacuation_message","value":0.0,"unitOfMeasure":"double","outputClass":"observable","outputSubClass":"context"},{"name":"probability","value":0.0062158704,"unitOfMeasure":"double","outputClass":"observable","outputSubClass":"context"},{"name":"intensity","value":3,"unitOfMeasure":"double","outputClass":"observable","outputSubClass":"context"},{"name":"landing","value":0.0,"unitOfMeasure":"double","outputClass":"observable","outputSubClass":"outcome"},{"name":"damage","value":2,"unitOfMeasure":"double","outputClass":"observable","outputSubClass":"outcome"},{"name":"utility","value":3,"unitOfMeasure":"double","outputClass":"internal","outputSubClass":"utility"}],[{"name":"decision","value":0.0,"unitOfMeasure":"double","outputClass":"observable","outputSubClass":"action"},{"name":"evacuation_message","value":1.0,"unitOfMeasure":"double","outputClass":"observable","outputSubClass":"context"},{"name":"probability","value":0.9267006,"unitOfMeasure":"double","outputClass":"observable","outputSubClass":"context"},{"name":"intensity","value":1,"unitOfMeasure":"double","outputClass":"observable","outputSubClass":"context"},{"name":"landing","value":1.0,"unitOfMeasure":"double","outputClass":"observable","outputSubClass":"outcome"},{"name":"damage","value":2,"unitOfMeasure":"double","outputClass":"observable","outputSubClass":"outcome"},{"name":"utility","value":-2,"unitOfMeasure":"double","outputClass":"internal","outputSubClass":"utility"}],[{"name":"decision","value":1.0,"unitOfMeasure":"double","outputClass":"observable","outputSubClass":"action"},{"name":"evacuation_message","value":1.0,"unitOfMeasure":"double","outputClass":"observable","outputSubClass":"context"},{"name":"probability","value":0.4891229,"unitOfMeasure":"double","outputClass":"observable","outputSubClass":"context"},{"name":"intensity","value":2,"unitOfMeasure":"double","outputClass":"observable","outputSubClass":"context"},{"name":"landing","value":0.0,"unitOfMeasure":"double","outputClass":"observable","outputSubClass":"outcome"},{"name":"damage","value":3,"unitOfMeasure":"double","outputClass":"observable","outputSubClass":"outcome"},{"name":"utility","value":-2,"unitOfMeasure":"double","outputClass":"internal","outputSubClass":"utility"}],[{"name":"decision","value":0.0,"unitOfMeasure":"double","outputClass":"observable","outputSubClass":"action"},{"name":"evacuation_message","value":0.0,"unitOfMeasure":"double","outputClass":"observable","outputSubClass":"context"},{"name":"probability","value":0.7557405,"unitOfMeasure":"double","outputClass":"observable","outputSubClass":"context"},{"name":"intensity","value":0,"unitOfMeasure":"double","outputClass":"observable","outputSubClass":"context"},{"name":"landing","value":1.0,"unitOfMeasure":"double","outputClass":"observable","outputSubClass":"outcome"},{"name":"damage","value":0,"unitOfMeasure":"double","outputClass":"observable","outputSubClass":"outcome"},{"name":"utility","value":0,"unitOfMeasure":"double","outputClass":"internal","outputSubClass":"utility"}]]]}]}]}
+    {"models":[{"name":"ACT-R","behavior":[{"name":"evacuate/stay","runs":[[[{"name":"decision","value":1.0,"unitOfMeasure":"double","outputClass":"observable","outputSubClass":"action"},{"name":"evacuation_message","value":1.0,"unitOfMeasure":"double","outputClass":"observable","outputSubClass":"context"},{"name":"probability","value":0.32606483,"unitOfMeasure":"double","outputClass":"observable","outputSubClass":"context"},{"name":"intensity","value":2,"unitOfMeasure":"double","outputClass":"observable","outputSubClass":"context"},{"name":"landing","value":0.0,"unitOfMeasure":"double","outputClass":"observable","outputSubClass":"outcome"},{"name":"damage","value":0,"unitOfMeasure":"double","outputClass":"observable","outputSubClass":"outcome"},{"name":"utility","value":-5,"unitOfMeasure":"double","outputClass":"internal","outputSubClass":"utility"}],[{"name":"decision","value":0.0,"unitOfMeasure":"double","outputClass":"observable","outputSubClass":"action"},{"name":"evacuation_message","value":0.0,"unitOfMeasure":"double","outputClass":"observable","outputSubClass":"context"},{"name":"probability","value":0.8650311,"unitOfMeasure":"double","outputClass":"observable","outputSubClass":"context"},{"name":"intensity","value":0,"unitOfMeasure":"double","outputClass":"observable","outputSubClass":"context"},{"name":"landing","value":1.0,"unitOfMeasure":"double","outputClass":"observable","outputSubClass":"outcome"},{"name":"damage","value":3,"unitOfMeasure":"double","outputClass":"observable","outputSubClass":"outcome"},{"name":"utility","value":-3,"unitOfMeasure":"double","outputClass":"internal","outputSubClass":"utility"}],[{"name":"decision","value":0.0,"unitOfMeasure":"double","outputClass":"observable","outputSubClass":"action"},{"name":"evacuation_message","value":0.0,"unitOfMeasure":"double","outputClass":"observable","outputSubClass":"context"},{"name":"probability","value":0.005523855,"unitOfMeasure":"double","outputClass":"observable","outputSubClass":"context"},{"name":"intensity","value":1,"unitOfMeasure":"double","outputClass":"observable","outputSubClass":"context"},{"name":"landing","value":0.0,"unitOfMeasure":"double","outputClass":"observable","outputSubClass":"outcome"},{"name":"damage","value":0,"unitOfMeasure":"double","outputClass":"observable","outputSubClass":"outcome"},{"name":"utility","value":5,"unitOfMeasure":"double","outputClass":"internal","outputSubClass":"utility"}],[{"name":"decision","value":0.0,"unitOfMeasure":"double","outputClass":"observable","outputSubClass":"action"},{"name":"evacuation_message","value":1.0,"unitOfMeasure":"double","outputClass":"observable","outputSubClass":"context"},{"name":"probability","value":0.5493901,"unitOfMeasure":"double","outputClass":"observable","outputSubClass":"context"},{"name":"intensity","value":4,"unitOfMeasure":"double","outputClass":"observable","outputSubClass":"context"},{"name":"landing","value":0.0,"unitOfMeasure":"double","outputClass":"observable","outputSubClass":"outcome"},{"name":"damage","value":5,"unitOfMeasure":"double","outputClass":"observable","outputSubClass":"outcome"},{"name":"utility","value":0,"unitOfMeasure":"double","outputClass":"internal","outputSubClass":"utility"}],[{"name":"decision","value":0.0,"unitOfMeasure":"double","outputClass":"observable","outputSubClass":"action"},{"name":"evacuation_message","value":1.0,"unitOfMeasure":"double","outputClass":"observable","outputSubClass":"context"},{"name":"probability","value":0.28204924,"unitOfMeasure":"double","outputClass":"observable","outputSubClass":"context"},{"name":"intensity","value":4,"unitOfMeasure":"double","outputClass":"observable","outputSubClass":"context"},{"name":"landing","value":0.0,"unitOfMeasure":"double","outputClass":"observable","outputSubClass":"outcome"},{"name":"damage","value":1,"unitOfMeasure":"double","outputClass":"observable","outputSubClass":"outcome"},{"name":"utility","value":4,"unitOfMeasure":"double","outputClass":"internal","outputSubClass":"utility"}]],[[{"name":"decision","value":1.0,"unitOfMeasure":"double","outputClass":"observable","outputSubClass":"action"},{"name":"evacuation_message","value":1.0,"unitOfMeasure":"double","outputClass":"observable","outputSubClass":"context"},{"name":"probability","value":0.46812302,"unitOfMeasure":"double","outputClass":"observable","outputSubClass":"context"},{"name":"intensity","value":1,"unitOfMeasure":"double","outputClass":"observable","outputSubClass":"context"},{"name":"landing","value":0.0,"unitOfMeasure":"double","outputClass":"observable","outputSubClass":"outcome"},{"name":"damage","value":0,"unitOfMeasure":"double","outputClass":"observable","outputSubClass":"outcome"},{"name":"utility","value":-5,"unitOfMeasure":"double","outputClass":"internal","outputSubClass":"utility"}],[{"name":"decision","value":0.0,"unitOfMeasure":"double","outputClass":"observable","outputSubClass":"action"},{"name":"evacuation_message","value":0.0,"unitOfMeasure":"double","outputClass":"observable","outputSubClass":"context"},{"name":"probability","value":0.0062158704,"unitOfMeasure":"double","outputClass":"observable","outputSubClass":"context"},{"name":"intensity","value":3,"unitOfMeasure":"double","outputClass":"observable","outputSubClass":"context"},{"name":"landing","value":0.0,"unitOfMeasure":"double","outputClass":"observable","outputSubClass":"outcome"},{"name":"damage","value":2,"unitOfMeasure":"double","outputClass":"observable","outputSubClass":"outcome"},{"name":"utility","value":3,"unitOfMeasure":"double","outputClass":"internal","outputSubClass":"utility"}],[{"name":"decision","value":0.0,"unitOfMeasure":"double","outputClass":"observable","outputSubClass":"action"},{"name":"evacuation_message","value":1.0,"unitOfMeasure":"double","outputClass":"observable","outputSubClass":"context"},{"name":"probability","value":0.9267006,"unitOfMeasure":"double","outputClass":"observable","outputSubClass":"context"},{"name":"intensity","value":1,"unitOfMeasure":"double","outputClass":"observable","outputSubClass":"context"},{"name":"landing","value":1.0,"unitOfMeasure":"double","outputClass":"observable","outputSubClass":"outcome"},{"name":"damage","value":2,"unitOfMeasure":"double","outputClass":"observable","outputSubClass":"outcome"},{"name":"utility","value":-2,"unitOfMeasure":"double","outputClass":"internal","outputSubClass":"utility"}],[{"name":"decision","value":1.0,"unitOfMeasure":"double","outputClass":"observable","outputSubClass":"action"},{"name":"evacuation_message","value":1.0,"unitOfMeasure":"double","outputClass":"observable","outputSubClass":"context"},{"name":"probability","value":0.4891229,"unitOfMeasure":"double","outputClass":"observable","outputSubClass":"context"},{"name":"intensity","value":2,"unitOfMeasure":"double","outputClass":"observable","outputSubClass":"context"},{"name":"landing","value":0.0,"unitOfMeasure":"double","outputClass":"observable","outputSubClass":"outcome"},{"name":"damage","value":3,"unitOfMeasure":"double","outputClass":"observable","outputSubClass":"outcome"},{"name":"utility","value":-2,"unitOfMeasure":"double","outputClass":"internal","outputSubClass":"utility"}],[{"name":"decision","value":0.0,"unitOfMeasure":"double","outputClass":"observable","outputSubClass":"action"},{"name":"evacuation_message","value":0.0,"unitOfMeasure":"double","outputClass":"observable","outputSubClass":"context"},{"name":"probability","value":0.7557405,"unitOfMeasure":"double","outputClass":"observable","outputSubClass":"context"},{"name":"intensity","value":0,"unitOfMeasure":"double","outputClass":"observable","outputSubClass":"context"},{"name":"landing","value":1.0,"unitOfMeasure":"double","outputClass":"observable","outputSubClass":"outcome"},{"name":"damage","value":0,"unitOfMeasure":"double","outputClass":"observable","outputSubClass":"outcome"},{"name":"utility","value":0,"unitOfMeasure":"double","outputClass":"internal","outputSubClass":"utility"}]]]}]}]}
 
-    dfm) dfm@carlisle:~/w/scale/act-up-interface$ cat sample.json | nc 127.0.0.1 21952
-    ["done","done"]
-    ["done"]
-
-At present, in lieu of the real model, there will also be some output spewed into the first shell
+If you instead ran the Lisp TCP server locally, there will also be some output spewed into the first shell
 describing what it has seen, mostly as Lisp data, though a little text, too, something like
 
     parameters: ((:NOISE :VALUE 0.25 :UNIT-OF-MEASURE NIL :PARAMETER-CLASS "model"
@@ -262,10 +252,1070 @@ describing what it has seen, mostly as Lisp data, though a little text, too, som
                   :PARAMETER-CLASS "simulation" :PARAMETER-SUB-CLASS "environment"))
     raw-data: "jsonFormattedRawData"
 
+As promised above, here's the first value returned above, but reformatted prettily on multiple lines:
+
+    {
+      "models": [
+        {
+          "name": "ACT-R",
+          "behavior": [
+            {
+              "name": "evacuate/stay",
+              "runs": [
+                [
+                  [
+                    {
+                      "name": "decision",
+                      "value": 1,
+                      "unitOfMeasure": "double",
+                      "outputClass": "observable",
+                      "outputSubClass": "action"
+                    },
+                    {
+                      "name": "evacuation_message",
+                      "value": 1,
+                      "unitOfMeasure": "double",
+                      "outputClass": "observable",
+                      "outputSubClass": "context"
+                    },
+                    {
+                      "name": "probability",
+                      "value": 0.32606483,
+                      "unitOfMeasure": "double",
+                      "outputClass": "observable",
+                      "outputSubClass": "context"
+                    },
+                    {
+                      "name": "intensity",
+                      "value": 2,
+                      "unitOfMeasure": "double",
+                      "outputClass": "observable",
+                      "outputSubClass": "context"
+                    },
+                    {
+                      "name": "landing",
+                      "value": 0,
+                      "unitOfMeasure": "double",
+                      "outputClass": "observable",
+                      "outputSubClass": "outcome"
+                    },
+                    {
+                      "name": "damage",
+                      "value": 0,
+                      "unitOfMeasure": "double",
+                      "outputClass": "observable",
+                      "outputSubClass": "outcome"
+                    },
+                    {
+                      "name": "utility",
+                      "value": -5,
+                      "unitOfMeasure": "double",
+                      "outputClass": "internal",
+                      "outputSubClass": "utility"
+                    }
+                  ],
+                  [
+                    {
+                      "name": "decision",
+                      "value": 0,
+                      "unitOfMeasure": "double",
+                      "outputClass": "observable",
+                      "outputSubClass": "action"
+                    },
+                    {
+                      "name": "evacuation_message",
+                      "value": 0,
+                      "unitOfMeasure": "double",
+                      "outputClass": "observable",
+                      "outputSubClass": "context"
+                    },
+                    {
+                      "name": "probability",
+                      "value": 0.8650311,
+                      "unitOfMeasure": "double",
+                      "outputClass": "observable",
+                      "outputSubClass": "context"
+                    },
+                    {
+                      "name": "intensity",
+                      "value": 0,
+                      "unitOfMeasure": "double",
+                      "outputClass": "observable",
+                      "outputSubClass": "context"
+                    },
+                    {
+                      "name": "landing",
+                      "value": 1,
+                      "unitOfMeasure": "double",
+                      "outputClass": "observable",
+                      "outputSubClass": "outcome"
+                    },
+                    {
+                      "name": "damage",
+                      "value": 3,
+                      "unitOfMeasure": "double",
+                      "outputClass": "observable",
+                      "outputSubClass": "outcome"
+                    },
+                    {
+                      "name": "utility",
+                      "value": -3,
+                      "unitOfMeasure": "double",
+                      "outputClass": "internal",
+                      "outputSubClass": "utility"
+                    }
+                  ],
+                  [
+                    {
+                      "name": "decision",
+                      "value": 0,
+                      "unitOfMeasure": "double",
+                      "outputClass": "observable",
+                      "outputSubClass": "action"
+                    },
+                    {
+                      "name": "evacuation_message",
+                      "value": 0,
+                      "unitOfMeasure": "double",
+                      "outputClass": "observable",
+                      "outputSubClass": "context"
+                    },
+                    {
+                      "name": "probability",
+                      "value": 0.005523855,
+                      "unitOfMeasure": "double",
+                      "outputClass": "observable",
+                      "outputSubClass": "context"
+                    },
+                    {
+                      "name": "intensity",
+                      "value": 1,
+                      "unitOfMeasure": "double",
+                      "outputClass": "observable",
+                      "outputSubClass": "context"
+                    },
+                    {
+                      "name": "landing",
+                      "value": 0,
+                      "unitOfMeasure": "double",
+                      "outputClass": "observable",
+                      "outputSubClass": "outcome"
+                    },
+                    {
+                      "name": "damage",
+                      "value": 0,
+                      "unitOfMeasure": "double",
+                      "outputClass": "observable",
+                      "outputSubClass": "outcome"
+                    },
+                    {
+                      "name": "utility",
+                      "value": 5,
+                      "unitOfMeasure": "double",
+                      "outputClass": "internal",
+                      "outputSubClass": "utility"
+                    }
+                  ],
+                  [
+                    {
+                      "name": "decision",
+                      "value": 0,
+                      "unitOfMeasure": "double",
+                      "outputClass": "observable",
+                      "outputSubClass": "action"
+                    },
+                    {
+                      "name": "evacuation_message",
+                      "value": 1,
+                      "unitOfMeasure": "double",
+                      "outputClass": "observable",
+                      "outputSubClass": "context"
+                    },
+                    {
+                      "name": "probability",
+                      "value": 0.5493901,
+                      "unitOfMeasure": "double",
+                      "outputClass": "observable",
+                      "outputSubClass": "context"
+                    },
+                    {
+                      "name": "intensity",
+                      "value": 4,
+                      "unitOfMeasure": "double",
+                      "outputClass": "observable",
+                      "outputSubClass": "context"
+                    },
+                    {
+                      "name": "landing",
+                      "value": 0,
+                      "unitOfMeasure": "double",
+                      "outputClass": "observable",
+                      "outputSubClass": "outcome"
+                    },
+                    {
+                      "name": "damage",
+                      "value": 5,
+                      "unitOfMeasure": "double",
+                      "outputClass": "observable",
+                      "outputSubClass": "outcome"
+                    },
+                    {
+                      "name": "utility",
+                      "value": 0,
+                      "unitOfMeasure": "double",
+                      "outputClass": "internal",
+                      "outputSubClass": "utility"
+                    }
+                  ],
+                  [
+                    {
+                      "name": "decision",
+                      "value": 0,
+                      "unitOfMeasure": "double",
+                      "outputClass": "observable",
+                      "outputSubClass": "action"
+                    },
+                    {
+                      "name": "evacuation_message",
+                      "value": 1,
+                      "unitOfMeasure": "double",
+                      "outputClass": "observable",
+                      "outputSubClass": "context"
+                    },
+                    {
+                      "name": "probability",
+                      "value": 0.28204924,
+                      "unitOfMeasure": "double",
+                      "outputClass": "observable",
+                      "outputSubClass": "context"
+                    },
+                    {
+                      "name": "intensity",
+                      "value": 4,
+                      "unitOfMeasure": "double",
+                      "outputClass": "observable",
+                      "outputSubClass": "context"
+                    },
+                    {
+                      "name": "landing",
+                      "value": 0,
+                      "unitOfMeasure": "double",
+                      "outputClass": "observable",
+                      "outputSubClass": "outcome"
+                    },
+                    {
+                      "name": "damage",
+                      "value": 1,
+                      "unitOfMeasure": "double",
+                      "outputClass": "observable",
+                      "outputSubClass": "outcome"
+                    },
+                    {
+                      "name": "utility",
+                      "value": 4,
+                      "unitOfMeasure": "double",
+                      "outputClass": "internal",
+                      "outputSubClass": "utility"
+                    }
+                  ]
+                ],
+                [
+                  [
+                    {
+                      "name": "decision",
+                      "value": 1,
+                      "unitOfMeasure": "double",
+                      "outputClass": "observable",
+                      "outputSubClass": "action"
+                    },
+                    {
+                      "name": "evacuation_message",
+                      "value": 1,
+                      "unitOfMeasure": "double",
+                      "outputClass": "observable",
+                      "outputSubClass": "context"
+                    },
+                    {
+                      "name": "probability",
+                      "value": 0.46812302,
+                      "unitOfMeasure": "double",
+                      "outputClass": "observable",
+                      "outputSubClass": "context"
+                    },
+                    {
+                      "name": "intensity",
+                      "value": 1,
+                      "unitOfMeasure": "double",
+                      "outputClass": "observable",
+                      "outputSubClass": "context"
+                    },
+                    {
+                      "name": "landing",
+                      "value": 0,
+                      "unitOfMeasure": "double",
+                      "outputClass": "observable",
+                      "outputSubClass": "outcome"
+                    },
+                    {
+                      "name": "damage",
+                      "value": 0,
+                      "unitOfMeasure": "double",
+                      "outputClass": "observable",
+                      "outputSubClass": "outcome"
+                    },
+                    {
+                      "name": "utility",
+                      "value": -5,
+                      "unitOfMeasure": "double",
+                      "outputClass": "internal",
+                      "outputSubClass": "utility"
+                    }
+                  ],
+                  [
+                    {
+                      "name": "decision",
+                      "value": 0,
+                      "unitOfMeasure": "double",
+                      "outputClass": "observable",
+                      "outputSubClass": "action"
+                    },
+                    {
+                      "name": "evacuation_message",
+                      "value": 0,
+                      "unitOfMeasure": "double",
+                      "outputClass": "observable",
+                      "outputSubClass": "context"
+                    },
+                    {
+                      "name": "probability",
+                      "value": 0.0062158704,
+                      "unitOfMeasure": "double",
+                      "outputClass": "observable",
+                      "outputSubClass": "context"
+                    },
+                    {
+                      "name": "intensity",
+                      "value": 3,
+                      "unitOfMeasure": "double",
+                      "outputClass": "observable",
+                      "outputSubClass": "context"
+                    },
+                    {
+                      "name": "landing",
+                      "value": 0,
+                      "unitOfMeasure": "double",
+                      "outputClass": "observable",
+                      "outputSubClass": "outcome"
+                    },
+                    {
+                      "name": "damage",
+                      "value": 2,
+                      "unitOfMeasure": "double",
+                      "outputClass": "observable",
+                      "outputSubClass": "outcome"
+                    },
+                    {
+                      "name": "utility",
+                      "value": 3,
+                      "unitOfMeasure": "double",
+                      "outputClass": "internal",
+                      "outputSubClass": "utility"
+                    }
+                  ],
+                  [
+                    {
+                      "name": "decision",
+                      "value": 0,
+                      "unitOfMeasure": "double",
+                      "outputClass": "observable",
+                      "outputSubClass": "action"
+                    },
+                    {
+                      "name": "evacuation_message",
+                      "value": 1,
+                      "unitOfMeasure": "double",
+                      "outputClass": "observable",
+                      "outputSubClass": "context"
+                    },
+                    {
+                      "name": "probability",
+                      "value": 0.9267006,
+                      "unitOfMeasure": "double",
+                      "outputClass": "observable",
+                      "outputSubClass": "context"
+                    },
+                    {
+                      "name": "intensity",
+                      "value": 1,
+                      "unitOfMeasure": "double",
+                      "outputClass": "observable",
+                      "outputSubClass": "context"
+                    },
+                    {
+                      "name": "landing",
+                      "value": 1,
+                      "unitOfMeasure": "double",
+                      "outputClass": "observable",
+                      "outputSubClass": "outcome"
+                    },
+                    {
+                      "name": "damage",
+                      "value": 2,
+                      "unitOfMeasure": "double",
+                      "outputClass": "observable",
+                      "outputSubClass": "outcome"
+                    },
+                    {
+                      "name": "utility",
+                      "value": -2,
+                      "unitOfMeasure": "double",
+                      "outputClass": "internal",
+                      "outputSubClass": "utility"
+                    }
+                  ],
+                  [
+                    {
+                      "name": "decision",
+                      "value": 1,
+                      "unitOfMeasure": "double",
+                      "outputClass": "observable",
+                      "outputSubClass": "action"
+                    },
+                    {
+                      "name": "evacuation_message",
+                      "value": 1,
+                      "unitOfMeasure": "double",
+                      "outputClass": "observable",
+                      "outputSubClass": "context"
+                    },
+                    {
+                      "name": "probability",
+                      "value": 0.4891229,
+                      "unitOfMeasure": "double",
+                      "outputClass": "observable",
+                      "outputSubClass": "context"
+                    },
+                    {
+                      "name": "intensity",
+                      "value": 2,
+                      "unitOfMeasure": "double",
+                      "outputClass": "observable",
+                      "outputSubClass": "context"
+                    },
+                    {
+                      "name": "landing",
+                      "value": 0,
+                      "unitOfMeasure": "double",
+                      "outputClass": "observable",
+                      "outputSubClass": "outcome"
+                    },
+                    {
+                      "name": "damage",
+                      "value": 3,
+                      "unitOfMeasure": "double",
+                      "outputClass": "observable",
+                      "outputSubClass": "outcome"
+                    },
+                    {
+                      "name": "utility",
+                      "value": -2,
+                      "unitOfMeasure": "double",
+                      "outputClass": "internal",
+                      "outputSubClass": "utility"
+                    }
+                  ],
+                  [
+                    {
+                      "name": "decision",
+                      "value": 0,
+                      "unitOfMeasure": "double",
+                      "outputClass": "observable",
+                      "outputSubClass": "action"
+                    },
+                    {
+                      "name": "evacuation_message",
+                      "value": 0,
+                      "unitOfMeasure": "double",
+                      "outputClass": "observable",
+                      "outputSubClass": "context"
+                    },
+                    {
+                      "name": "probability",
+                      "value": 0.7557405,
+                      "unitOfMeasure": "double",
+                      "outputClass": "observable",
+                      "outputSubClass": "context"
+                    },
+                    {
+                      "name": "intensity",
+                      "value": 0,
+                      "unitOfMeasure": "double",
+                      "outputClass": "observable",
+                      "outputSubClass": "context"
+                    },
+                    {
+                      "name": "landing",
+                      "value": 1,
+                      "unitOfMeasure": "double",
+                      "outputClass": "observable",
+                      "outputSubClass": "outcome"
+                    },
+                    {
+                      "name": "damage",
+                      "value": 0,
+                      "unitOfMeasure": "double",
+                      "outputClass": "observable",
+                      "outputSubClass": "outcome"
+                    },
+                    {
+                      "name": "utility",
+                      "value": 0,
+                      "unitOfMeasure": "double",
+                      "outputClass": "internal",
+                      "outputSubClass": "utility"
+                    }
+                  ]
+                ]
+              ]
+            }
+          ]
+        },
+        {
+          "name": "ACT-R",
+          "behavior": [
+            {
+              "name": "evacuate/stay",
+              "runs": [
+                [
+                  [
+                    {
+                      "name": "decision",
+                      "value": 1,
+                      "unitOfMeasure": "double",
+                      "outputClass": "observable",
+                      "outputSubClass": "action"
+                    },
+                    {
+                      "name": "evacuation_message",
+                      "value": 1,
+                      "unitOfMeasure": "double",
+                      "outputClass": "observable",
+                      "outputSubClass": "context"
+                    },
+                    {
+                      "name": "probability",
+                      "value": 0.32606483,
+                      "unitOfMeasure": "double",
+                      "outputClass": "observable",
+                      "outputSubClass": "context"
+                    },
+                    {
+                      "name": "intensity",
+                      "value": 2,
+                      "unitOfMeasure": "double",
+                      "outputClass": "observable",
+                      "outputSubClass": "context"
+                    },
+                    {
+                      "name": "landing",
+                      "value": 0,
+                      "unitOfMeasure": "double",
+                      "outputClass": "observable",
+                      "outputSubClass": "outcome"
+                    },
+                    {
+                      "name": "damage",
+                      "value": 0,
+                      "unitOfMeasure": "double",
+                      "outputClass": "observable",
+                      "outputSubClass": "outcome"
+                    },
+                    {
+                      "name": "utility",
+                      "value": -5,
+                      "unitOfMeasure": "double",
+                      "outputClass": "internal",
+                      "outputSubClass": "utility"
+                    }
+                  ],
+                  [
+                    {
+                      "name": "decision",
+                      "value": 0,
+                      "unitOfMeasure": "double",
+                      "outputClass": "observable",
+                      "outputSubClass": "action"
+                    },
+                    {
+                      "name": "evacuation_message",
+                      "value": 0,
+                      "unitOfMeasure": "double",
+                      "outputClass": "observable",
+                      "outputSubClass": "context"
+                    },
+                    {
+                      "name": "probability",
+                      "value": 0.8650311,
+                      "unitOfMeasure": "double",
+                      "outputClass": "observable",
+                      "outputSubClass": "context"
+                    },
+                    {
+                      "name": "intensity",
+                      "value": 0,
+                      "unitOfMeasure": "double",
+                      "outputClass": "observable",
+                      "outputSubClass": "context"
+                    },
+                    {
+                      "name": "landing",
+                      "value": 1,
+                      "unitOfMeasure": "double",
+                      "outputClass": "observable",
+                      "outputSubClass": "outcome"
+                    },
+                    {
+                      "name": "damage",
+                      "value": 3,
+                      "unitOfMeasure": "double",
+                      "outputClass": "observable",
+                      "outputSubClass": "outcome"
+                    },
+                    {
+                      "name": "utility",
+                      "value": -3,
+                      "unitOfMeasure": "double",
+                      "outputClass": "internal",
+                      "outputSubClass": "utility"
+                    }
+                  ],
+                  [
+                    {
+                      "name": "decision",
+                      "value": 0,
+                      "unitOfMeasure": "double",
+                      "outputClass": "observable",
+                      "outputSubClass": "action"
+                    },
+                    {
+                      "name": "evacuation_message",
+                      "value": 0,
+                      "unitOfMeasure": "double",
+                      "outputClass": "observable",
+                      "outputSubClass": "context"
+                    },
+                    {
+                      "name": "probability",
+                      "value": 0.005523855,
+                      "unitOfMeasure": "double",
+                      "outputClass": "observable",
+                      "outputSubClass": "context"
+                    },
+                    {
+                      "name": "intensity",
+                      "value": 1,
+                      "unitOfMeasure": "double",
+                      "outputClass": "observable",
+                      "outputSubClass": "context"
+                    },
+                    {
+                      "name": "landing",
+                      "value": 0,
+                      "unitOfMeasure": "double",
+                      "outputClass": "observable",
+                      "outputSubClass": "outcome"
+                    },
+                    {
+                      "name": "damage",
+                      "value": 0,
+                      "unitOfMeasure": "double",
+                      "outputClass": "observable",
+                      "outputSubClass": "outcome"
+                    },
+                    {
+                      "name": "utility",
+                      "value": 5,
+                      "unitOfMeasure": "double",
+                      "outputClass": "internal",
+                      "outputSubClass": "utility"
+                    }
+                  ],
+                  [
+                    {
+                      "name": "decision",
+                      "value": 0,
+                      "unitOfMeasure": "double",
+                      "outputClass": "observable",
+                      "outputSubClass": "action"
+                    },
+                    {
+                      "name": "evacuation_message",
+                      "value": 1,
+                      "unitOfMeasure": "double",
+                      "outputClass": "observable",
+                      "outputSubClass": "context"
+                    },
+                    {
+                      "name": "probability",
+                      "value": 0.5493901,
+                      "unitOfMeasure": "double",
+                      "outputClass": "observable",
+                      "outputSubClass": "context"
+                    },
+                    {
+                      "name": "intensity",
+                      "value": 4,
+                      "unitOfMeasure": "double",
+                      "outputClass": "observable",
+                      "outputSubClass": "context"
+                    },
+                    {
+                      "name": "landing",
+                      "value": 0,
+                      "unitOfMeasure": "double",
+                      "outputClass": "observable",
+                      "outputSubClass": "outcome"
+                    },
+                    {
+                      "name": "damage",
+                      "value": 5,
+                      "unitOfMeasure": "double",
+                      "outputClass": "observable",
+                      "outputSubClass": "outcome"
+                    },
+                    {
+                      "name": "utility",
+                      "value": 0,
+                      "unitOfMeasure": "double",
+                      "outputClass": "internal",
+                      "outputSubClass": "utility"
+                    }
+                  ],
+                  [
+                    {
+                      "name": "decision",
+                      "value": 0,
+                      "unitOfMeasure": "double",
+                      "outputClass": "observable",
+                      "outputSubClass": "action"
+                    },
+                    {
+                      "name": "evacuation_message",
+                      "value": 1,
+                      "unitOfMeasure": "double",
+                      "outputClass": "observable",
+                      "outputSubClass": "context"
+                    },
+                    {
+                      "name": "probability",
+                      "value": 0.28204924,
+                      "unitOfMeasure": "double",
+                      "outputClass": "observable",
+                      "outputSubClass": "context"
+                    },
+                    {
+                      "name": "intensity",
+                      "value": 4,
+                      "unitOfMeasure": "double",
+                      "outputClass": "observable",
+                      "outputSubClass": "context"
+                    },
+                    {
+                      "name": "landing",
+                      "value": 0,
+                      "unitOfMeasure": "double",
+                      "outputClass": "observable",
+                      "outputSubClass": "outcome"
+                    },
+                    {
+                      "name": "damage",
+                      "value": 1,
+                      "unitOfMeasure": "double",
+                      "outputClass": "observable",
+                      "outputSubClass": "outcome"
+                    },
+                    {
+                      "name": "utility",
+                      "value": 4,
+                      "unitOfMeasure": "double",
+                      "outputClass": "internal",
+                      "outputSubClass": "utility"
+                    }
+                  ]
+                ],
+                [
+                  [
+                    {
+                      "name": "decision",
+                      "value": 1,
+                      "unitOfMeasure": "double",
+                      "outputClass": "observable",
+                      "outputSubClass": "action"
+                    },
+                    {
+                      "name": "evacuation_message",
+                      "value": 1,
+                      "unitOfMeasure": "double",
+                      "outputClass": "observable",
+                      "outputSubClass": "context"
+                    },
+                    {
+                      "name": "probability",
+                      "value": 0.46812302,
+                      "unitOfMeasure": "double",
+                      "outputClass": "observable",
+                      "outputSubClass": "context"
+                    },
+                    {
+                      "name": "intensity",
+                      "value": 1,
+                      "unitOfMeasure": "double",
+                      "outputClass": "observable",
+                      "outputSubClass": "context"
+                    },
+                    {
+                      "name": "landing",
+                      "value": 0,
+                      "unitOfMeasure": "double",
+                      "outputClass": "observable",
+                      "outputSubClass": "outcome"
+                    },
+                    {
+                      "name": "damage",
+                      "value": 0,
+                      "unitOfMeasure": "double",
+                      "outputClass": "observable",
+                      "outputSubClass": "outcome"
+                    },
+                    {
+                      "name": "utility",
+                      "value": -5,
+                      "unitOfMeasure": "double",
+                      "outputClass": "internal",
+                      "outputSubClass": "utility"
+                    }
+                  ],
+                  [
+                    {
+                      "name": "decision",
+                      "value": 0,
+                      "unitOfMeasure": "double",
+                      "outputClass": "observable",
+                      "outputSubClass": "action"
+                    },
+                    {
+                      "name": "evacuation_message",
+                      "value": 0,
+                      "unitOfMeasure": "double",
+                      "outputClass": "observable",
+                      "outputSubClass": "context"
+                    },
+                    {
+                      "name": "probability",
+                      "value": 0.0062158704,
+                      "unitOfMeasure": "double",
+                      "outputClass": "observable",
+                      "outputSubClass": "context"
+                    },
+                    {
+                      "name": "intensity",
+                      "value": 3,
+                      "unitOfMeasure": "double",
+                      "outputClass": "observable",
+                      "outputSubClass": "context"
+                    },
+                    {
+                      "name": "landing",
+                      "value": 0,
+                      "unitOfMeasure": "double",
+                      "outputClass": "observable",
+                      "outputSubClass": "outcome"
+                    },
+                    {
+                      "name": "damage",
+                      "value": 2,
+                      "unitOfMeasure": "double",
+                      "outputClass": "observable",
+                      "outputSubClass": "outcome"
+                    },
+                    {
+                      "name": "utility",
+                      "value": 3,
+                      "unitOfMeasure": "double",
+                      "outputClass": "internal",
+                      "outputSubClass": "utility"
+                    }
+                  ],
+                  [
+                    {
+                      "name": "decision",
+                      "value": 0,
+                      "unitOfMeasure": "double",
+                      "outputClass": "observable",
+                      "outputSubClass": "action"
+                    },
+                    {
+                      "name": "evacuation_message",
+                      "value": 1,
+                      "unitOfMeasure": "double",
+                      "outputClass": "observable",
+                      "outputSubClass": "context"
+                    },
+                    {
+                      "name": "probability",
+                      "value": 0.9267006,
+                      "unitOfMeasure": "double",
+                      "outputClass": "observable",
+                      "outputSubClass": "context"
+                    },
+                    {
+                      "name": "intensity",
+                      "value": 1,
+                      "unitOfMeasure": "double",
+                      "outputClass": "observable",
+                      "outputSubClass": "context"
+                    },
+                    {
+                      "name": "landing",
+                      "value": 1,
+                      "unitOfMeasure": "double",
+                      "outputClass": "observable",
+                      "outputSubClass": "outcome"
+                    },
+                    {
+                      "name": "damage",
+                      "value": 2,
+                      "unitOfMeasure": "double",
+                      "outputClass": "observable",
+                      "outputSubClass": "outcome"
+                    },
+                    {
+                      "name": "utility",
+                      "value": -2,
+                      "unitOfMeasure": "double",
+                      "outputClass": "internal",
+                      "outputSubClass": "utility"
+                    }
+                  ],
+                  [
+                    {
+                      "name": "decision",
+                      "value": 1,
+                      "unitOfMeasure": "double",
+                      "outputClass": "observable",
+                      "outputSubClass": "action"
+                    },
+                    {
+                      "name": "evacuation_message",
+                      "value": 1,
+                      "unitOfMeasure": "double",
+                      "outputClass": "observable",
+                      "outputSubClass": "context"
+                    },
+                    {
+                      "name": "probability",
+                      "value": 0.4891229,
+                      "unitOfMeasure": "double",
+                      "outputClass": "observable",
+                      "outputSubClass": "context"
+                    },
+                    {
+                      "name": "intensity",
+                      "value": 2,
+                      "unitOfMeasure": "double",
+                      "outputClass": "observable",
+                      "outputSubClass": "context"
+                    },
+                    {
+                      "name": "landing",
+                      "value": 0,
+                      "unitOfMeasure": "double",
+                      "outputClass": "observable",
+                      "outputSubClass": "outcome"
+                    },
+                    {
+                      "name": "damage",
+                      "value": 3,
+                      "unitOfMeasure": "double",
+                      "outputClass": "observable",
+                      "outputSubClass": "outcome"
+                    },
+                    {
+                      "name": "utility",
+                      "value": -2,
+                      "unitOfMeasure": "double",
+                      "outputClass": "internal",
+                      "outputSubClass": "utility"
+                    }
+                  ],
+                  [
+                    {
+                      "name": "decision",
+                      "value": 0,
+                      "unitOfMeasure": "double",
+                      "outputClass": "observable",
+                      "outputSubClass": "action"
+                    },
+                    {
+                      "name": "evacuation_message",
+                      "value": 0,
+                      "unitOfMeasure": "double",
+                      "outputClass": "observable",
+                      "outputSubClass": "context"
+                    },
+                    {
+                      "name": "probability",
+                      "value": 0.7557405,
+                      "unitOfMeasure": "double",
+                      "outputClass": "observable",
+                      "outputSubClass": "context"
+                    },
+                    {
+                      "name": "intensity",
+                      "value": 0,
+                      "unitOfMeasure": "double",
+                      "outputClass": "observable",
+                      "outputSubClass": "context"
+                    },
+                    {
+                      "name": "landing",
+                      "value": 1,
+                      "unitOfMeasure": "double",
+                      "outputClass": "observable",
+                      "outputSubClass": "outcome"
+                    },
+                    {
+                      "name": "damage",
+                      "value": 0,
+                      "unitOfMeasure": "double",
+                      "outputClass": "observable",
+                      "outputSubClass": "outcome"
+                    },
+                    {
+                      "name": "utility",
+                      "value": 0,
+                      "unitOfMeasure": "double",
+                      "outputClass": "internal",
+                      "outputSubClass": "utility"
+                    }
+                  ]
+                ]
+              ]
+            }
+          ]
+        }
+      ]
+    }
 
 
 
 ## Error handling
 
 At some point we should think about how to deal with errors. For now, when there is an error in the interface code
-it will simply attempt to return a JSON string describing it.
+it will simply attempt to return a JSON string describing it. For example,
+
+    (dfm) dfm@carlisle:~/w/scale/act-up-interface$ echo '{"ill-formated": "JSON"]' | nc koalemos.lan.cmu.edu 21952
+
+prints
+
+    Error: Expected a `,' separator or `}' in Object on JSON input but found `]' [in #<dynamic-extent STRING-INPUT-STREAM (unavailable) from "{\"ill-fo..."> at position 24]
