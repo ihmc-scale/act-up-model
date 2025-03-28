@@ -8,9 +8,8 @@ response per line. The connection need not be closed between requests, but can b
 By default the connection should be through port 21952, but this can easily be changed, if desired, as
 described below.
 
-The example data to be passed to the model, as negotiated between Brodie and Christian, is pretty stable, and the basis for the preliminary implementation.
-The example data to be returned from the model seems to be still much in flux, so this preliminary implementation returns what is
-essentially a stub value, simply a constant JSON string.
+The example data to be passed, both from the reasoner to the model, and back to the reasoner from the model,
+as negotiated between Brodie and Christian, is pretty stable, and the basis for this implementation.
 
 ## Hooking the ACT-UP model to this interface
 
@@ -19,14 +18,13 @@ essentially a stub value, simply a constant JSON string.
 First load into Lisp the source file `model-server.lisp`. Then define a function, `scale:run-model`. Note that `model-server.lisp` does need to be loaded
 first so that the symbol `scale:run-model` is available.
 
-The `scale:run-model` function should take twoarguments:
+The `scale:run-model` function should take two arguments:
 
 * `parameters`, a list structure described further below
 
 * ``raw-data`, a Lisp formatted version of what is provided under this tag by the reasoner; I don't really know what this is all about, so am doing no further formatting on this at present; we may choose to change this later
 
-The value returned by `scale:run-model` will be converted to JSON and written back on the TCP stream to the reasoner.
-As the output format appears still to be in flux, for now it is recommended that `scale:run-model` simply return a string; we'll update this when things become clearer.
+The first value returned by `scale:run-model` will be converted to JSON and written back on the TCP stream to the reasoner.
 
 The `parameters` is an a-list mapping parameter names to p-lists. The parameter names are provided as keywords. The p-lists map attributes of the parameter to values.
 Thus, you can get the `:value` of the `:noise` parameter by doing
@@ -78,13 +76,56 @@ Here's an example of the parameters value resulting from first model value provi
      (:INTENSITY-STANDARD-DEVIATION :VALUE 1.0 :UNIT-OF-MEASURE NIL
       :PARAMETER-CLASS "simulation" :PARAMETER-SUB-CLASS "environment"))
 
-Note that if no `scale:run-model` has been defined, by default the various values of the input arguments will be printed in the Lisp listener.
+Note that if no `scale:run-model` has been defined, by default the various values of the input arguments will simply be printed in the Lisp listener.
+
+The first return value should be something isomorphic to a sequence (*i.e.* a list or vector) of sequences, the elements of the inner sequence being lists of the form for the input parameters, described above.
+Note that for these purposes a two dimensional array is considered isomorphic to a sequence of sequences.
+The resulting JSON is assembled into a structure looking like that in `model_to_reasoner_output_spec.json`.
+Since only the `ACT-R` models in the input are run through the ACT-UP model, all non-ACT-R models in the return value are replaced by JSON `null` values.
+
+The second value returned by the `model-function` should be the `behavior` name to be included in the returned JSON; if it is `nil`, or the `run-mdoel` function only
+returns a single value, the constant `evacuate/stay` is used, as in the first such value in Brody's example, thought this constant can easily be
+changed if desired.
+
+Note that if no real `run-mdoel` function is provided on the Lisp side a default value, as provided by Christian, is used. This default
+value is stored in the repo as `output-sample.lisp`. If the contents of this file are changed the effect will be immediate in the code,
+no need to restart anything, as it reads the file each time it needs this value.
 
 Note that this code has only been tested in SBCL, though I believe it should run fine in CCL, or any other Common Lisp implementation that supports `usocket`.
 
-## Running this code
+## Calling into the interface from the reasoner
 
 [This section is primarily of interest to Brodie]
+
+To use it simply open a TCP connection to relevant port on whatever machine is hosting this software.
+Currently it is hosted on `koalemos.lan.cmu.edu`, using the default port of 21952.
+So you could open such a connection
+(on Linux or another UNIX-like OS, I don't know what the corresponding incantation would be in Windows) by simply doing
+
+    nc koalemos.lan.cmu.edu 21952
+
+Alternatively you can run the code locally (as described in the next section), and connect to it through localhost.
+
+Then write and read single lines of JSON to and from it. Note that there can be *no* newlines anywhere in the JSON. If you've got prettily
+formatted JSON you'll need to strip the newlines. Note that the JSON spec does not allow newlines within strings, so simply replacing
+any in the prettily formatted JSON by spaces works fine. I believe Python's `json.dump()` and `json.dumps()` functions write JSON
+with no linefeeds so long as no optional parameters directing it to do otherwise are provided.
+
+If you're new to this world, note that a standard gotcha is that when writing to a TCP stream from code (C, Python, whatever) you typically have to explicitly
+flush the IO buffer to send the whole message. There's also potential weirdness in Python in the distinction between strings (which are UTF-8)
+and byte vectors, and I think maybe sometimes you have to do an explicit encoding, I no longer remember for sure.
+If things do need to be explicitly encoded, they should be UTF-8 (that's a part of the JSON spec, though I doubt we'll have to worry
+about anything that's not just vanilla ASCII).
+
+As described in in `reasoner_to_model_input_spec.json` the JSON data supplied to the interface will be a JSON object.
+Only the `models` slot of this object will be consulted, and it should be a JSON array (in normal-speak we often call these "vectors,"
+but the official JSON term is "array"; go figure). The value the interface
+returns is as described in `model_to_reasoner_output_spec.json`, with one `Models` entry per corresponding entry in the input, albeit
+with all non-ACT-R models have a value of JSON `null`.
+
+## Running this code
+
+[Again, this section is primarily of interest to Brodie]
 
 To run this a suitable Common Lisp implementation (SBCL is recommended) and QuickLisp must be installed.
 Installing SBCL is easy on a variety of OSes, so long as a pre-built binary is used.
@@ -97,8 +138,6 @@ in many years; for Windows, though, I'm unlikely to be much help, never using it
 Once you have a Lisp implementation installed you need to install QuickLisp, which is near trivial.
 See [https://www.quicklisp.org/beta/](https://www.quicklisp.org/beta/) for details (don't worry that
 it says "beta," it's been around and stable for a very long time). If necessary, I can easily help.
-
-If this is too much I could undoubtedly put together a docker thingie, though that seems like overkill for the purpose.
 
 Once you've got a QuickLisp enabled Lisp installed to run this stuff (on Linux, Macintosh, or any other UNIX-like OS) just do
 
@@ -122,35 +161,9 @@ If you want to use a different port just supply the number as the sole argument 
 
     ./run.sh 9999
 
-## Calling into the interface from the reasoner
+## Examples
 
-[Again, this section is primarily of interest to Brodie]
-
-To use it simply open a TCP connection to relevant port on whatever machine is hosting this software (likely localhost, I presume) and
-write and read single lines of JSON to and from it. Note that there can be *no* newlines anywhere in the JSON. If you've got prettily
-formatted JSON you'll need to strip the newlines. Note that the JSON spec does not allow newlines within strings, so simply replacing
-any in the prettily formatted JSON by spaces works fine. I believe Python's `json.dump()` and `json.dumps()` functions write JSON
-with no linefeeds so long as no optional parameters directing it to do otherwise are provided.
-
-If you're new to this world, note that a standard gotcha is that when writing to a TCP stream you typically have to explicitly
-flush the IO buffer to send the whole message. There's also potential weirdness in Python in the distinction between strings (which are UTF-8)
-and byte vectors, and I think maybe sometimes you have to do an explicit encoding, I no longer remember for sure.
-If things do need to be explicitly encoded, they should be UTF-8 (that's a part of the JSON spec, though I doubt we'll have to worry
-about anything that's not just vanilla ASCII).
-
-As noted above, I've not done anything with the expected format for the ACT-UP→reasoner stuff, as my understanding is it's still
-under negotiation. Right now, for each run of the ACT-UP model the corresponding component of the return value
-will be just a meaningless stub string, `"done"`.
-
-As described in in `reasoner_to_model_input_spec.json` the JSON data supplied to the interface will be a JSON object.
-Only the `models` slot of this object will be consulted, and it should be a JSON array (in normal-speak we often call these "vectors,"
-but the official JSON term is "array"; go figure). The value the interface
-returns is a JSON array of the same length. For each element of the input array that is labeled as an `ACT-R` model
-it will run the ACT-UP model on it and the corresponding return array element. The elements of the returned array that correspond
-to things not marked as being `ACT-R` will be JSON `null` values. Note that with the current stub the non-null values will typically
-just be JSON strings, but this will change once we've finished the required negotiation.
-
-Here's an example of testing this stuff using `netcat` to fill in for the reasoner. Note that there is a file, `sample.json`, in this repo.
+Here's an example of testing this stuff using `netcat` to fill in for the reasoner. Note that there is a file, `input-sample.json`, in this repo.
 This contains two JSON values, each on a single line. The first is the example from `reasoner_to_model_input_spec.json`, reduced to a single line;
 the second is similar, but with only the first model section of that example data. To test this in one shell start the interface code
 
@@ -249,5 +262,10 @@ describing what it has seen, mostly as Lisp data, though a little text, too, som
                   :PARAMETER-CLASS "simulation" :PARAMETER-SUB-CLASS "environment"))
     raw-data: "jsonFormattedRawData"
 
+
+
+
+## Error handling
+
 At some point we should think about how to deal with errors. For now, when there is an error in the interface code
-it w9ill attempt to return a JSON string describing it.
+it will simply attempt to return a JSON string describing it.
