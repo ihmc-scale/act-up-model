@@ -8,6 +8,7 @@
 (defpackage :scale-act-up-interface
   (:nicknames :scale)
   (:use :common-lisp :alexandria :iterate :json :usocket)
+  (:import-from :uiop uiop:read-file-form)
   (:export #:run #:run-model #:pget #:*data-function-name-package*))
 
 (in-package :scale)
@@ -16,7 +17,13 @@
 
 (define-constant +default-port+ 21952)
 
+(define-constant +output-sample-filename+ "output-sample.lisp" :test #'string-equal)
+(define-constant +default-behavior-name+ "evacuate/stay" :test #'string-equal)
+
 (defparameter *data-function-name-package* 'CL-USER)
+
+(defparameter *pathname-defaults*
+  (make-pathname :name nil :type nil :defaults *load-pathname*))
 
 (defun %run-model (parameters raw-data)
   (vom:debug "Calling model on ~S ~S ~S" parameters raw-data)
@@ -24,11 +31,24 @@
                        (funcall (symbol-function 'run-model) parameters raw-data))
                       (t (format t "~&parameters: ~:W~%raw-data: ~:W~2%"
                                  parameters raw-data)
-                         "done"))))
+                         (read-file-form (merge-pathnames +output-sample-filename+ *pathname-defaults*))))))
     (vom:debug "Model returned ~S" result)
-    result))
+    ;; canonicalizeu result into a list of lists
+    (when (arrayp result)
+      (setf result
+            (case (array-rank result)
+              (1 (coerce result 'list))
+              (2 (iter (for i :from 0 :below (array-dimension result 0))
+                       (collect
+                           (iter (for j :from 0 :below (array-dimension result 1))
+                                 (for x := (aref result i j))
+                                 (when x
+                                   (collect x))))))
+              (t (error "Don't know how to process a ~D dimensional array for return to reasoner"
+                        (array-rank result))))))
+    (mapcar (lambda (x) (coerce x 'list)) result)))
 
-(defun restructure-json (model-data)
+(defun restructure-input (model-data)
   (values (iter (for p :in (cdr (assoc :parameters model-data)))
                 (for n := (cdr (assoc :name p)))
                 (assert (stringp n))
@@ -47,6 +67,19 @@
 (defun pget (parameters name &optional (key :value))
   (getf (cdr (assoc name parameters)) key))
 
+(defun lower-underscore (s)
+  (if (typep s 'string-designator)
+      (substitute-if #\_ (lambda (c) (member c '(#\Space #\-))) (string-downcase s))
+      s))
+
+(defun restructure-output (data)
+  (iter (for outer :in data)
+        (collect (iter (for inner :in outer)
+                       (collect (iter (for (n . rest) :in inner)
+                                      (collect `((:name . ,(lower-underscore n))
+                                                 ,@(iter (for (k v) :on rest :by #'cddr)
+                                                         (collect (cons k (lower-underscore v))))))))))))
+
 (defun process-line (line)
   (let ((json (decode-json-from-string line)))
     (vom:debug "Processing JSON ~S" json)
@@ -56,10 +89,14 @@
     (vom:debug "Processing models ~S" json)
     (iter (for m :in json)
           (collect (and (string-equal (cdr (assoc :name m)) "ACT-R")
-                        (multiple-value-bind (params raw-data) (restructure-json m)
-                          (%run-model params raw-data)))
-            :into result)
-          (finally (let ((encoded-result (encode-json-to-string result)))
+                        (multiple-value-bind (params raw-data) (restructure-input m)
+                          `((:name . "ACT-R")
+                            (:behavior . #(((:name . ,+default-behavior-name+)
+                                            (:runs ,@(restructure-output (%run-model params raw-data)))))))))
+            :into results)
+          (finally (setf results `((:models . ,results)))
+                   (:_ results)
+                   (let ((encoded-result (encode-json-to-string results)))
                      (vom:debug "Returning ~S" encoded-result)
                      (return encoded-result))))))
 
