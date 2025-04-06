@@ -1,6 +1,7 @@
 ;;;; Copyright 2025 Carnegie Mellon University
 
-(ql:quickload '(:cl-interpol :alexandria :iterate :cl-json :usocket :uiop :vom)
+(ql:quickload '(:cl-interpol :alexandria :iterate :cl-json
+                :bordeaux-threads :usocket :uiop :vom)
               :silent t)
 
 (asdf:load-system :usocket-server)
