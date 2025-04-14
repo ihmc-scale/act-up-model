@@ -9,8 +9,7 @@
 (defpackage :scale-act-up-interface
   (:nicknames :scale)
   (:use :common-lisp :alexandria :iterate :json :usocket)
-  (:import-from :uiop uiop:read-file-form)
-  (:export #:run #:run-model #:pget #:*data-function-name-package*))
+  (:export #:run #:*data-function-name-package*))
 
 (in-package :scale)
 
@@ -18,24 +17,14 @@
 
 (define-constant +default-port+ 21952)
 
-(define-constant +output-sample-filename+ "output-sample.lisp" :test #'string-equal)
 (define-constant +default-behavior-name+ "evacuate/stay" :test #'string-equal)
 
 (defparameter *data-function-name-package* 'CL-USER)
 
-(defparameter *pathname-defaults*
-  (make-pathname :name nil :type nil :defaults *load-pathname*))
-
 (defun %run-model (parameters raw-data)
   (vom:debug "Calling model on ~S ~S ~S" parameters raw-data)
   (multiple-value-bind (result name)
-      (let ((run-model-name (find-symbol "RUN-MODEL" :cl-user)))
-        (cond ((and run-model-name (fboundp run-model-name))
-               (funcall (symbol-function run-model-name) parameters raw-data))
-              (t (format t "~&parameters: ~:W~%raw-data: ~:W~2%" parameters raw-data)
-                 (values (uiop:read-file-form (merge-pathnames +output-sample-filename+
-                                                               *pathname-defaults*))
-                         nil))))
+      (cl-user::run-model parameters raw-data)
     (vom:debug "Model returned (~A) ~S" name result)
     ;; canonicalize result into a list of lists
     (when (arrayp result)
@@ -67,9 +56,6 @@
                                        (unless (eq k :name)
                                          (nconcing (list k v)))))))
           (cdr (assoc :raw-data model-data))))
-
-(defun pget (parameters name &optional (key :value))
-  (getf (cdr (assoc name parameters)) key))
 
 (defun lower-underscore (s)
   (if (typep s 'string-designator)
