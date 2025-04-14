@@ -29,12 +29,13 @@
 (defun %run-model (parameters raw-data)
   (vom:debug "Calling model on ~S ~S ~S" parameters raw-data)
   (multiple-value-bind (result name)
-      (cond ((fboundp 'run-model)
-             (funcall (symbol-function 'run-model) parameters raw-data))
-            (t (format t "~&parameters: ~:W~%raw-data: ~:W~2%" parameters raw-data)
-               (values (read-file-form (merge-pathnames +output-sample-filename+
-                                                        *pathname-defaults*))
-                       nil)))
+      (let ((run-model-name (find-symbol "RUN-MODEL" :cl-user)))
+        (cond ((and run-model-name (fboundp run-model-name))
+               (funcall (symbol-function run-model-name) parameters raw-data))
+              (t (format t "~&parameters: ~:W~%raw-data: ~:W~2%" parameters raw-data)
+                 (values (uiop:read-file-form (merge-pathnames +output-sample-filename+
+                                                               *pathname-defaults*))
+                         nil))))
     (vom:debug "Model returned (~A) ~S" name result)
     ;; canonicalize result into a list of lists
     (when (arrayp result)
