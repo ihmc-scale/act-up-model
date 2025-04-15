@@ -1,4 +1,4 @@
 #! /bin/sh
 # Copyright 2025 Carnegie Mellon University
 
-sbcl --eval "(in-package :cl-user)" --load act-up-v1_3_2 --load 'evacuation-model-v0.3.1.lisp' --load model-server --eval "(progn (vom:config t :debug) (scale:run nil $1))"
+sbcl --eval "(in-package :cl-user)" --load act-up-v1_3_2 --load 'evacuation-model-v0.3.2.lisp' --load model-server --eval "(progn (vom:config t :debug) (scale:run nil $1))"
