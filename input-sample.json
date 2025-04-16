@@ -1,9 +1,1 @@
-(progn
-  (swank:set-default-directory "/home/dfm/w/wildfire/")
-  (load "wildfire")
-  (swank:set-package "WILDFIRE")
-  (funcall (find-symbol "START-SERVER" (find-package "WILDFIRE")) :debug nil))
-
-
-
 {"models":[{"name":"ACT-R","parameters":[{"name":"runcount","value":100,"unitOfMeasure":null,"parameterClass":"simulation","parameterSubClass":"simulation"},{"name":"probabilitythreshold","value":0.25,"unitOfMeasure":null,"parameterClass":"simulation","parameterSubClass":"policy"},{"name":"intensitythreshold","value":1,"unitOfMeasure":null,"parameterClass":"simulation","parameterSubClass":"policy"}],"rawData":"jsonFormattedRawData"}]}
