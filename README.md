@@ -28,8 +28,6 @@ This should write a single line, about 8 MB, a single JSON object, to /tmp/outpu
 
 ## Hooking the ACT-UP model to the TCP interface
 
-[This section primarily of interest to Christian]
-
 The model provides a function, `run-model`, to the server. This  function should take two arguments:
 
 * `parameters`, a list structure described further below
@@ -93,8 +91,6 @@ Note that this code has only been tested in SBCL, though I believe it should run
 
 ## Calling into the interface from the reasoner
 
-[This section is primarily of interest to Brodie]
-
 To use it simply open a TCP connection to relevant port on whatever machine is hosting this software.
 Currently it is hosted on `koalemos.lan.cmu.edu`, using the default port of 21952.
 So you could open such a connection
@@ -123,8 +119,6 @@ returns is as described in `model_to_reasoner_output_spec.json`, with one `Model
 with all non-ACT-R models have a value of JSON `null`.
 
 ## Running this code
-
-[Again, this section is primarily of interest to Brodie]
 
 If you don't want to install things on your machine you can also use a Docker container to run it, as described near the end of this document.
 
