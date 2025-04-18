@@ -21,7 +21,7 @@ is a piece of example JSON, `input-sample.json`, which we will pass to the serve
 
     cat input-sample.json | nc koalemos.lan.cmu.edu 21952 > /tmp/output.json
 
-This should right a single line, about 8 MB, a single JSON object, to /tmp/output.json
+This should write a single line, about 8 MB, a single JSON object, to /tmp/output.json
 
 **WARNING**. This is not currently constructed to support multiple, concurrent queries simultaneously. The plumbing could easily be so configured, but the actual model code is not re-entrant, and would have to be modified to support such use.
 
