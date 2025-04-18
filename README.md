@@ -23,7 +23,7 @@ is a piece of example JSON, `input-sample.json`, which we will pass to the serve
 
 This should right a single line, about 8 MB, a single JSON object, to /tmp/output.json
 
-**EARNING**. This is not constructed to support multiple, concurrent queries simultaneously. The plumbing could easily be so configured, but the actual model code is not re-entrant, and would have to be modified to support such use.
+**WARNING**. This is not currently constructed to support multiple, concurrent queries simultaneously. The plumbing could easily be so configured, but the actual model code is not re-entrant, and would have to be modified to support such use.
 
 
 ## Hooking the ACT-UP model to the TCP interface
