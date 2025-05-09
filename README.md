@@ -149,6 +149,8 @@ To make it more loquacious, spitting out lots of debugging status and the like, 
 
 In Windows these shell scripts won't work, and you'll have to make a suitable replacement. I doubt it would be difficult, but I'm clueless about all things Windows.
 
+Also note that these scripts assume a machine with at least 24GB of physical memory. If running on a smaller machine you may want to decrease the maximum dynamic size requested in them.
+
 To kill the thing just use control-C; it should come down reasonably gracefully if you've used SBCL, perhaps with a little less grace in other Lisp implementations.
 
 If you want to use a different port just supply the number as the sole argument to `run.sh` or `debug.sh`; for example, to use port 9999
