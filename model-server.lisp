@@ -15,8 +15,7 @@
 
 (vom:config t :info)
 
-#+SBCL
-(setf (sb-ext:gc-logfile) "gc.log")
+#+SBCL (setf (sb-ext:gc-logfile) "gc.log")
 
 (define-constant +default-port+ 21952)
 
@@ -109,6 +108,7 @@
                                   (finish-output stream)
                                   (next-iteration))))
         (finish-output stream))
+  #+SBCL (sb-ext:gc :full t)
   (vom:info "Finished from ~A" *remote-host*))
 
 (defun run (&optional(interactive (member :swank *features*)) (port +default-port+))
