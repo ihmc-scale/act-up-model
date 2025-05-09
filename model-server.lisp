@@ -15,6 +15,9 @@
 
 (vom:config t :info)
 
+#+SBCL
+(setf (sb-ext:gc-logfile) "gc.log")
+
 (define-constant +default-port+ 21952)
 
 (define-constant +default-behavior-name+ "evacuate/stay" :test #'string-equal)
@@ -95,6 +98,7 @@
                        (return encoded-result)))))))
 
 (defun tcp-handler (stream)
+  (vom:info "Connected from ~A" *remote-host*)
   (iter (for line := (read-line stream nil '#0=#:eof))
         (vom:debug "Read line ~S" line)
         (until (eq line '#0#))
@@ -104,7 +108,8 @@
                                   (format stream "Error: ~A~%"  e)
                                   (finish-output stream)
                                   (next-iteration))))
-        (finish-output stream)))
+        (finish-output stream))
+  (vom:info "Finished from ~A" *remote-host*))
 
 (defun run (&optional(interactive (member :swank *features*)) (port +default-port+))
   (vom:info "Starting SCALE model listener on port ~D" port)
