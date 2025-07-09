@@ -10,16 +10,16 @@ described below.
 
 The model is available in three forms:
 
-* a running server on Koalemos, described below
+* a running server on Mneme, described below
 
 * as a Docker image, discussed further below
 
 * or simply as the code in this repo
 
-Here's an example of running the model, using the Koalemos-hosted server. Note that in this repo
+Here's an example of running the model, using the Mneme-hosted server. Note that in this repo
 is a piece of example JSON, `input-sample.json`, which we will pass to the server using netcat.
 
-    cat input-sample.json | nc koalemos.lan.cmu.edu 21952 > /tmp/output.json
+    cat input-sample.json | nc mneme.lan.cmu.edu 21952 > /tmp/output.json
 
 This should write a single line, about 8 MB, a single JSON object, to /tmp/output.json
 
@@ -92,11 +92,11 @@ Note that this code has only been tested in SBCL, though I believe it should run
 ## Calling into the interface from the reasoner
 
 To use it simply open a TCP connection to relevant port on whatever machine is hosting this software.
-Currently it is hosted on `koalemos.lan.cmu.edu`, using the default port of 21952.
+Currently it is hosted on `mneme.lan.cmu.edu`, using the default port of 21952.
 So you could open such a connection
 (on Linux or another UNIX-like OS, I don't know what the corresponding incantation would be in Windows) by simply doing
 
-    nc koalemos.lan.cmu.edu 21952
+    nc mneme.lan.cmu.edu 21952
 
 Alternatively you can run the code locally (as described in the next section), and connect to it through localhost. There is also
 a Dockerfile to facilitate running it that way; further details in a later section.
@@ -164,7 +164,7 @@ If you want to use a different port just supply the number as the sole argument 
 At some point we should think about how to deal with errors. For now, when there is an error in the interface code
 it will simply attempt to return a JSON string describing it. For example,
 
-    (dfm) dfm@carlisle:~/w/scale/act-up-interface$ echo '{"ill-formated": "JSON"]' | nc koalemos.lan.cmu.edu 21952
+    (dfm) dfm@carlisle:~/w/scale/act-up-interface$ echo '{"ill-formated": "JSON"]' | nc mneme.lan.cmu.edu 21952
 
 prints
 
