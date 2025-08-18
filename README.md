@@ -36,7 +36,7 @@ The model provides a function, `run-model`, to the server. This  function should
 
 The first value returned by `scale:run-model` will be converted to JSON and written back on the TCP stream to the reasoner.
 
-The `parameters` is an a-list mapping parameter names to p-lists. The parameter names are provided as keywords. The p-lists map attributes of the parameter to values.
+The `parameters` is an a-list *mostly* mapping parameter names to p-lists. The parameter names are provided as keywords. The p-lists map attributes of the parameter to values.
 Thus, you can get the `:value` of the `:noise` parameter by doing
 
     (getf (cdr (assoc :noise parameters)) :value)
@@ -45,10 +45,12 @@ Note that the `:similarity` and `:utility` parameters are handled slightly speci
 by setting the value of the `scale:*data-function-name-package*` variable to a different package name. `CL-USER` was chosen on the assumption that's where
 Christian will be working.
 
+However, the *first* element of the `parameters` a-list always maps the keyword `:name` to a list whose sole element is a keyword denoting the model name. *E.g.* `(:name :act-r)`.
+
 Here's an example of the parameters value resulting from first model value provided in `reasoner_to_model_input_spec.json`:
 
-
-    ((:NOISE :VALUE 0.25 :UNIT-OF-MEASURE NIL :PARAMETER-CLASS "model"
+    ((:NAME :ACT-r)
+     (:NOISE :VALUE 0.25 :UNIT-OF-MEASURE NIL :PARAMETER-CLASS "model"
       :PARAMETER-SUB-CLASS "architecture")
      (:TEMPERATURE :VALUE 1.0 :UNIT-OF-MEASURE NIL :PARAMETER-CLASS "model"
       :PARAMETER-SUB-CLASS "architecture")
@@ -81,7 +83,7 @@ Here's an example of the parameters value resulting from first model value provi
 The first return value should be something isomorphic to a sequence (*i.e.* a list or vector) of sequences, the elements of the inner sequence being lists of the form for the input parameters, described above.
 Note that for these purposes a two dimensional array is considered isomorphic to a sequence of sequences.
 The resulting JSON is assembled into a structure looking like that in `model_to_reasoner_output_spec.json`.
-Since only the `ACT-R` models in the input are run through the ACT-UP model, all non-ACT-R models in the return value are replaced by JSON `null` values.
+If the Lisp model code doesn't know how to handle a request the corresponding element in the return JSON array is a JSON empty object, `{}`.
 
 The second value returned by the `model-function` should be the `behavior` name to be included in the returned JSON; if it is `nil`, or the `run-mdoel` function only
 returns a single value, the constant `evacuate/stay` is used, as in the first such value in Brody's example, thought this constant can easily be
