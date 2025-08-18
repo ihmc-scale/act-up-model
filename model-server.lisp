@@ -83,8 +83,7 @@
           (for model-name := (make-keyword (string-upcase (cdr (assoc :name m)))))
           (for (values runs behavior-name) := (multiple-value-bind (params raw-data)
                                                   (restructure-input m)
-                                                (%run-model `( ,@params) raw-data)))
-                                                ;; (%run-model `((:name ,model-name) ,@params) raw-data)))
+                                                (%run-model `((:name ,model-name) ,@params) raw-data)))
           (collect (if runs
                        `((:name . ,model-name)
                          (:behavior . #(((:name . ,(or behavior-name +default-behavior-name+))
