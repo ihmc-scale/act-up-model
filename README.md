@@ -42,14 +42,15 @@ Thus, you can get the `:value` of the `:noise` parameter by doing
     (getf (cdr (assoc :noise parameters)) :value)
 
 Note that the `:similarity` and `:utility` parameters are handled slightly specially: their `:value`s are p-lists, mapping a keyword version of the type (*e.g.* `:integeer` or `:double`) to a Lisp symbol interned from the string provided in the JSON. By default these symbols are interned in the `CL-USER` package, but if desired this can be changed
-by setting the value of the `scale:*data-function-name-package*` variable to a different package name. `CL-USER` was chosen on the assumption that's where
+by setting the value of the `scale:*data--name-package*` variable to a different package name. `CL-USER` was chosen on the assumption that's where
 Christian will be working.
 
-However, the *first* element of the `parameters` a-list always maps the keyword `:name` to a list whose sole element is a keyword denoting the model name. *E.g.* `(:name :act-r)`.
+However, the *first* element of the `parameters` a-list always maps the keyword `:name` to a list whose sole element is a keyword denoting the model name. *E.g.* `(:name MODEL-FREE-DECISION)`.
+The JSON string for the model's name is converted to a symbol (again in the packaged denoted by `scale:*data--name-package*`), upcased with camel-case boundaries and spaces converted to hyophens.
 
 Here's an example of the parameters value resulting from first model value provided in `reasoner_to_model_input_spec.json`:
 
-    ((:NAME :ACT-r)
+    ((:NAME MODEL-FREE-DECISION)
      (:NOISE :VALUE 0.25 :UNIT-OF-MEASURE NIL :PARAMETER-CLASS "model"
       :PARAMETER-SUB-CLASS "architecture")
      (:TEMPERATURE :VALUE 1.0 :UNIT-OF-MEASURE NIL :PARAMETER-CLASS "model"

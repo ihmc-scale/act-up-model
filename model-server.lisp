@@ -9,7 +9,7 @@
 (defpackage :scale-act-up-interface
   (:nicknames :scale)
   (:use :common-lisp :alexandria :iterate :json :usocket)
-  (:export #:run #:*data-function-name-package*))
+  (:export #:run #:*data-name-package*))
 
 (in-package :scale)
 
@@ -21,7 +21,7 @@
 
 (define-constant +default-behavior-name+ "evacuate/stay" :test #'string-equal)
 
-(defparameter *data-function-name-package* 'CL-USER)
+(defparameter *data-name-package* 'CL-USER)
 
 (defun %run-model (parameters raw-data)
   (vom:debug "Calling model on ~S ~S" parameters raw-data)
@@ -54,7 +54,7 @@
                                                   (member n '(:utility :similarity)))
                                          (setf v (iter (for (typ . fn) :in v)
                                                        (nconcing (list typ (intern (string-upcase fn)
-                                                                                   *data-function-name-package*))))))
+                                                                                   *data-name-package*))))))
                                        (unless (eq k :name)
                                          (nconcing (list k v)))))))
           (cdr (assoc :raw-data model-data))))
@@ -63,6 +63,11 @@
   (if (typep s 'string-designator)
       (substitute-if #\_ (lambda (c) (member c '(#\Space #\-))) (string-downcase s))
       s))
+
+(defun model-name-to-lisp (s)
+  (assert (typep s 'string-designator))
+  (intern (string-upcase (substitute #\- #\Space (remove #\* (remove \+ (camel-case-to-lisp s)))))
+          *data-name-package*))
 
 (defun restructure-output (data)
   (iter (for outer :in data)
@@ -80,7 +85,7 @@
     (assert (listp json))
     (vom:debug "Processing models ~S" json)
     (iter (for m :in json)
-          (for model-name := (make-keyword (string-upcase (cdr (assoc :name m)))))
+          (for model-name := (model-name-to-lisp (cdr (assoc :name m))))
           (for (values runs behavior-name) := (multiple-value-bind (params raw-data)
                                                   (restructure-input m)
                                                 (%run-model `((:name ,model-name) ,@params) raw-data)))

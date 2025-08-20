@@ -50,9 +50,16 @@ v 0.3.3
 - add run-batch function to collect statistics
 - add averaging of accuracy values to evaluate function
 
+v 0.3.4
+
+8/19/2025:
+
+- add model name to run-model function
+- add *models* variable holding list of implemented models
+
 |#
 
-(defparameter *evacuation-model-version* "0.3.3")
+(defparameter *evacuation-model-version* "0.3.4")
 
 (format t "Loading evacuation model version ~S~%" *evacuation-model-version*)
 
@@ -296,6 +303,8 @@ v 0.3.3
           (let ((pair (list (second parameter) (getf (rest value) :VALUE))))
             (if flatten (setf parameters (append pair parameters))
               (push pair parameters))))))))
+
+(defparameter *models* '(model-free-decision model-based-decision))
     
 (defun run-model (parameters raw-data &key (model-parameters '((:noise :ans) (:temperature :tmp)))
                              (simulation-parameters '((:run-count :runs) (:run-length :length) (:init-length :init) (:run-delay :delay)
@@ -304,8 +313,13 @@ v 0.3.3
                                                       (:intensity-standard-deviation :damage-noise))))
   "Applies parameters then calls simulation then protocol-output to return results."
   (declare (ignore raw-data)) ;;; not currently using raw data
-  (protocol-output (apply 'simulate :parameters (append (list (translate-parameter-list parameters model-parameters))
-                                                        (translate-parameter-list parameters simulation-parameters :flatten t)))))
+  (let ((translated-parameters (append (list (translate-parameter-list parameters model-parameters))
+                                       (translate-parameter-list parameters simulation-parameters :flatten t))))
+    (protocol-output 
+     (if (eq (first (first parameters)) ':name)
+         (when (member (second (first parameters)) *models* :test 'eq) ;;; check model name
+           (apply 'simulate :decision (second (first parameters)) :parameters translated-parameters))
+         (apply 'simulate :parameters translated-parameters)))))
 
 #|
 ? (evaluate (simulate :length 100 :init 10))
@@ -1286,5 +1300,186 @@ During that period, and with 10 available CPU cores,
  8,909,258,365 bytes of memory allocated.
  45,382,569 minor page faults, 1,037 major page faults, 0 swaps.
 1
+;;; Checking memory allocation for single runs of various parameter settings
+?  (time (progn (simulate :runs 1 :length 100 :probability-threshold 0.0 :intensity-threshold 1 :decision 'model-free-decision) ()))
+(PROGN (SIMULATE :RUNS 1 :LENGTH 100 :PROBABILITY-THRESHOLD 0.0 :INTENSITY-THRESHOLD 1 :DECISION 'MODEL-FREE-DECISION) NIL)
+took 435,087 microseconds (0.435087 seconds) to run.
+         924 microseconds (0.000924 seconds, 0.21%) of which was spent in GC.
+During that period, and with 10 available CPU cores,
+     234,051 microseconds (0.234051 seconds) were spent in user mode
+     233,388 microseconds (0.233388 seconds) were spent in system mode
+ 4,956,112 bytes of memory allocated.
+ 25,283 minor page faults, 13 major page faults, 0 swaps.
+NIL
+?  (time (progn (simulate :runs 1 :length 100 :probability-threshold 0.1 :intensity-threshold 1 :decision 'model-free-decision) ()))
+(PROGN (SIMULATE :RUNS 1 :LENGTH 100 :PROBABILITY-THRESHOLD 0.1 :INTENSITY-THRESHOLD 1 :DECISION 'MODEL-FREE-DECISION) NIL)
+took 440,818 microseconds (0.440818 seconds) to run.
+       1,144 microseconds (0.001144 seconds, 0.26%) of which was spent in GC.
+During that period, and with 10 available CPU cores,
+     253,936 microseconds (0.253936 seconds) were spent in user mode
+     256,012 microseconds (0.256012 seconds) were spent in system mode
+ 4,936,848 bytes of memory allocated.
+ 40,989 minor page faults, 0 major page faults, 0 swaps.
+NIL
+?  (time (progn (simulate :runs 1 :length 100 :probability-threshold 0.25 :intensity-threshold 1 :decision 'model-free-decision) ()))
+(PROGN (SIMULATE :RUNS 1 :LENGTH 100 :PROBABILITY-THRESHOLD 0.25 :INTENSITY-THRESHOLD 1 :DECISION 'MODEL-FREE-DECISION) NIL)
+took 391,333 microseconds (0.391333 seconds) to run.
+       1,260 microseconds (0.001260 seconds, 0.32%) of which was spent in GC.
+During that period, and with 10 available CPU cores,
+     244,885 microseconds (0.244885 seconds) were spent in user mode
+     237,684 microseconds (0.237684 seconds) were spent in system mode
+ 5,060,816 bytes of memory allocated.
+ 42,954 minor page faults, 3 major page faults, 0 swaps.
+NIL
+?  (time (progn (simulate :runs 1 :length 100 :probability-threshold 0.35 :intensity-threshold 1 :decision 'model-free-decision) ()))
+(PROGN (SIMULATE :RUNS 1 :LENGTH 100 :PROBABILITY-THRESHOLD 0.35 :INTENSITY-THRESHOLD 1 :DECISION 'MODEL-FREE-DECISION) NIL)
+took 373,627 microseconds (0.373627 seconds) to run.
+       1,790 microseconds (0.001790 seconds, 0.48%) of which was spent in GC.
+During that period, and with 10 available CPU cores,
+     222,890 microseconds (0.222890 seconds) were spent in user mode
+     206,970 microseconds (0.206970 seconds) were spent in system mode
+ 5,109,648 bytes of memory allocated.
+ 29,616 minor page faults, 0 major page faults, 0 swaps.
+NIL
+?  (time (progn (simulate :runs 1 :length 100 :probability-threshold 0.5 :intensity-threshold 1 :decision 'model-free-decision) ()))
+(PROGN (SIMULATE :RUNS 1 :LENGTH 100 :PROBABILITY-THRESHOLD 0.5 :INTENSITY-THRESHOLD 1 :DECISION 'MODEL-FREE-DECISION) NIL)
+took 439,258 microseconds (0.439258 seconds) to run.
+       1,097 microseconds (0.001097 seconds, 0.25%) of which was spent in GC.
+During that period, and with 10 available CPU cores,
+     238,717 microseconds (0.238717 seconds) were spent in user mode
+     232,955 microseconds (0.232955 seconds) were spent in system mode
+ 5,131,120 bytes of memory allocated.
+ 29,754 minor page faults, 0 major page faults, 0 swaps.
+NIL
+?  (time (progn (simulate :runs 1 :length 100 :probability-threshold 0.25 :intensity-threshold 0 :decision 'model-free-decision) ()))
+(PROGN (SIMULATE :RUNS 1 :LENGTH 100 :PROBABILITY-THRESHOLD 0.25 :INTENSITY-THRESHOLD 0 :DECISION 'MODEL-FREE-DECISION) NIL)
+took 374,778 microseconds (0.374778 seconds) to run.
+         975 microseconds (0.000975 seconds, 0.26%) of which was spent in GC.
+During that period, and with 10 available CPU cores,
+     230,370 microseconds (0.230370 seconds) were spent in user mode
+     208,080 microseconds (0.208080 seconds) were spent in system mode
+ 5,010,960 bytes of memory allocated.
+ 30,759 minor page faults, 0 major page faults, 0 swaps.
+NIL
+?  (time (progn (simulate :runs 1 :length 100 :probability-threshold 0.25 :intensity-threshold 1 :decision 'model-free-decision) ()))
+(PROGN (SIMULATE :RUNS 1 :LENGTH 100 :PROBABILITY-THRESHOLD 0.25 :INTENSITY-THRESHOLD 1 :DECISION 'MODEL-FREE-DECISION) NIL)
+took 377,242 microseconds (0.377242 seconds) to run.
+       1,091 microseconds (0.001091 seconds, 0.29%) of which was spent in GC.
+During that period, and with 10 available CPU cores,
+     234,315 microseconds (0.234315 seconds) were spent in user mode
+     213,470 microseconds (0.213470 seconds) were spent in system mode
+ 4,928,688 bytes of memory allocated.
+ 31,508 minor page faults, 0 major page faults, 0 swaps.
+NIL
+?  (time (progn (simulate :runs 1 :length 100 :probability-threshold 0.25 :intensity-threshold 2 :decision 'model-free-decision) ()))
+(PROGN (SIMULATE :RUNS 1 :LENGTH 100 :PROBABILITY-THRESHOLD 0.25 :INTENSITY-THRESHOLD 2 :DECISION 'MODEL-FREE-DECISION) NIL)
+took 378,221 microseconds (0.378221 seconds) to run.
+       1,166 microseconds (0.001166 seconds, 0.31%) of which was spent in GC.
+During that period, and with 10 available CPU cores,
+     240,625 microseconds (0.240625 seconds) were spent in user mode
+     210,149 microseconds (0.210149 seconds) were spent in system mode
+ 5,138,416 bytes of memory allocated.
+ 32,424 minor page faults, 8 major page faults, 0 swaps.
+NIL
+?  (time (progn (simulate :runs 1 :length 100 :probability-threshold 0.25 :intensity-threshold 3 :decision 'model-free-decision) ()))
+(PROGN (SIMULATE :RUNS 1 :LENGTH 100 :PROBABILITY-THRESHOLD 0.25 :INTENSITY-THRESHOLD 3 :DECISION 'MODEL-FREE-DECISION) NIL)
+took 377,735 microseconds (0.377735 seconds) to run.
+       1,648 microseconds (0.001648 seconds, 0.44%) of which was spent in GC.
+During that period, and with 10 available CPU cores,
+     237,721 microseconds (0.237721 seconds) were spent in user mode
+     206,892 microseconds (0.206892 seconds) were spent in system mode
+ 5,058,736 bytes of memory allocated.
+ 26,061 minor page faults, 4 major page faults, 0 swaps.
+NIL
+?  (time (progn (simulate :runs 1 :length 100 :probability-threshold 0.0 :intensity-threshold 1 :decision 'model-based-decision) ()))
+(PROGN (SIMULATE :RUNS 1 :LENGTH 100 :PROBABILITY-THRESHOLD 0.0 :INTENSITY-THRESHOLD 1 :DECISION 'MODEL-BASED-DECISION) NIL)
+took 698,047 microseconds (0.698047 seconds) to run.
+       1,978 microseconds (0.001978 seconds, 0.28%) of which was spent in GC.
+During that period, and with 10 available CPU cores,
+     335,546 microseconds (0.335546 seconds) were spent in user mode
+     395,360 microseconds (0.395360 seconds) were spent in system mode
+ 9,339,856 bytes of memory allocated.
+ 53,988 minor page faults, 0 major page faults, 0 swaps.
+NIL
+?  (time (progn (simulate :runs 1 :length 100 :probability-threshold 0.1 :intensity-threshold 1 :decision 'model-based-decision) ()))
+(PROGN (SIMULATE :RUNS 1 :LENGTH 100 :PROBABILITY-THRESHOLD 0.1 :INTENSITY-THRESHOLD 1 :DECISION 'MODEL-BASED-DECISION) NIL)
+took 716,967 microseconds (0.716967 seconds) to run.
+       4,779 microseconds (0.004779 seconds, 0.67%) of which was spent in GC.
+During that period, and with 10 available CPU cores,
+     354,650 microseconds (0.354650 seconds) were spent in user mode
+     400,038 microseconds (0.400038 seconds) were spent in system mode
+ 9,567,248 bytes of memory allocated.
+ 55,515 minor page faults, 2 major page faults, 0 swaps.
+NIL
+?  (time (progn (simulate :runs 1 :length 100 :probability-threshold 0.25 :intensity-threshold 1 :decision 'model-based-decision) ()))
+(PROGN (SIMULATE :RUNS 1 :LENGTH 100 :PROBABILITY-THRESHOLD 0.25 :INTENSITY-THRESHOLD 1 :DECISION 'MODEL-BASED-DECISION) NIL)
+took 728,004 microseconds (0.728004 seconds) to run.
+       3,241 microseconds (0.003241 seconds, 0.45%) of which was spent in GC.
+During that period, and with 10 available CPU cores,
+     391,805 microseconds (0.391805 seconds) were spent in user mode
+     388,163 microseconds (0.388163 seconds) were spent in system mode
+ 11,026,512 bytes of memory allocated.
+ 59,471 minor page faults, 0 major page faults, 0 swaps.
+NIL
+?  (time (progn (simulate :runs 1 :length 100 :probability-threshold 0.35 :intensity-threshold 1 :decision 'model-based-decision) ()))
+(PROGN (SIMULATE :RUNS 1 :LENGTH 100 :PROBABILITY-THRESHOLD 0.35 :INTENSITY-THRESHOLD 1 :DECISION 'MODEL-BASED-DECISION) NIL)
+took 716,404 microseconds (0.716404 seconds) to run.
+       2,976 microseconds (0.002976 seconds, 0.42%) of which was spent in GC.
+During that period, and with 10 available CPU cores,
+     377,121 microseconds (0.377121 seconds) were spent in user mode
+     396,414 microseconds (0.396414 seconds) were spent in system mode
+ 9,984,656 bytes of memory allocated.
+ 58,930 minor page faults, 0 major page faults, 0 swaps.
+NIL
+?  (time (progn (simulate :runs 1 :length 100 :probability-threshold 0.5 :intensity-threshold 1 :decision 'model-based-decision) ()))
+(PROGN (SIMULATE :RUNS 1 :LENGTH 100 :PROBABILITY-THRESHOLD 0.5 :INTENSITY-THRESHOLD 1 :DECISION 'MODEL-BASED-DECISION) NIL)
+took 718,149 microseconds (0.718149 seconds) to run.
+       2,460 microseconds (0.002460 seconds, 0.34%) of which was spent in GC.
+During that period, and with 10 available CPU cores,
+     383,354 microseconds (0.383354 seconds) were spent in user mode
+     398,702 microseconds (0.398702 seconds) were spent in system mode
+ 10,016,336 bytes of memory allocated.
+ 61,489 minor page faults, 0 major page faults, 0 swaps.
+NIL
+?  (time (progn (simulate :runs 1 :length 100 :probability-threshold 0.25 :intensity-threshold 0 :decision 'model-based-decision) ()))
+(PROGN (SIMULATE :RUNS 1 :LENGTH 100 :PROBABILITY-THRESHOLD 0.25 :INTENSITY-THRESHOLD 0 :DECISION 'MODEL-BASED-DECISION) NIL)
+took 711,356 microseconds (0.711356 seconds) to run.
+       2,497 microseconds (0.002497 seconds, 0.35%) of which was spent in GC.
+During that period, and with 10 available CPU cores,
+     384,406 microseconds (0.384406 seconds) were spent in user mode
+     402,859 microseconds (0.402859 seconds) were spent in system mode
+ 9,835,472 bytes of memory allocated.
+ 63,277 minor page faults, 0 major page faults, 0 swaps.
+NIL
+?  (time (progn (simulate :runs 1 :length 100 :probability-threshold 0.25 :intensity-threshold 1 :decision 'model-based-decision) ()))
+(PROGN (SIMULATE :RUNS 1 :LENGTH 100 :PROBABILITY-THRESHOLD 0.25 :INTENSITY-THRESHOLD 1 :DECISION 'MODEL-BASED-DECISION) NIL)
+took 703,160 microseconds (0.703160 seconds) to run.
+       2,412 microseconds (0.002412 seconds, 0.34%) of which was spent in GC.
+During that period, and with 10 available CPU cores,
+     368,625 microseconds (0.368625 seconds) were spent in user mode
+     374,334 microseconds (0.374334 seconds) were spent in system mode
+ 10,028,048 bytes of memory allocated.
+ 49,876 minor page faults, 0 major page faults, 0 swaps.
+NIL
+?  (time (progn (simulate :runs 1 :length 100 :probability-threshold 0.25 :intensity-threshold 2 :decision 'model-based-decision) ()))
+(PROGN (SIMULATE :RUNS 1 :LENGTH 100 :PROBABILITY-THRESHOLD 0.25 :INTENSITY-THRESHOLD 2 :DECISION 'MODEL-BASED-DECISION) NIL)
+took 691,036 microseconds (0.691036 seconds) to run.
+       2,813 microseconds (0.002813 seconds, 0.41%) of which was spent in GC.
+During that period, and with 10 available CPU cores,
+     352,817 microseconds (0.352817 seconds) were spent in user mode
+     369,316 microseconds (0.369316 seconds) were spent in system mode
+ 10,025,872 bytes of memory allocated.
+ 51,713 minor page faults, 0 major page faults, 0 swaps.
+NIL
+?  (time (progn (simulate :runs 1 :length 100 :probability-threshold 0.25 :intensity-threshold 3 :decision 'model-based-decision) ()))
+(PROGN (SIMULATE :RUNS 1 :LENGTH 100 :PROBABILITY-THRESHOLD 0.25 :INTENSITY-THRESHOLD 3 :DECISION 'MODEL-BASED-DECISION) NIL)
+took 697,816 microseconds (0.697816 seconds) to run.
+       2,697 microseconds (0.002697 seconds, 0.39%) of which was spent in GC.
+During that period, and with 10 available CPU cores,
+     361,819 microseconds (0.361819 seconds) were spent in user mode
+     377,268 microseconds (0.377268 seconds) were spent in system mode
+ 9,893,520 bytes of memory allocated.
+ 54,478 minor page faults, 0 major page faults, 0 swaps.
+NIL
 
 |#
