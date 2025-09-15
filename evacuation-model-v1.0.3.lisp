@@ -86,9 +86,17 @@ v 1.0.2
 - add trace parameter to learn-instance
 - use blend-vote instead of blend in trust and control models since blending over discrete decisions
 
+v 1.0.3
+
+9/15/25:
+
+- add *evacuation-threshold*, *evacuation-similarity* and *evacuation-weight* variables and initialize them in init-model
+- add learn-similarity function to learn evaucation similarity in trust calibration model
+- add trust-calibration function that implements ad hoc version of trust calibration model
+
 |#
 
-(defparameter *evacuation-model-version* "1.0.2")
+(defparameter *evacuation-model-version* "1.0.3")
 
 (format t "Loading evacuation model version ~S~%" *evacuation-model-version*)
 
@@ -116,12 +124,23 @@ v 1.0.2
         (intensity-similarity (1+ x) (1+ y)) ;;; shift scale from [0,5] to [1,6]
         (probability-similarity x y))))
 
+;;; threshold for similarity is half-way
+(defparameter *evacuation-threshold* -0.5)
+
+;;; initial evacuation similarity in trust calibration model
+(defparameter *evacuation-similarity* -0.5)
+
+;;; initial evacuation weight in trust calibration model
+(defparameter *evacuation-weight* 1)
+
 (defun init-model (&optional (parameters nil))
   (init-memory)
   (init-similarities)
   (setf *similarity-hook-function* 'number-similarity)
   (similarity 'yes 'no -1.0)
   (similarity 'no 'yes -1.0)
+  (setf *evacuation-similarity* -0.5)
+  (setf *evacuation-weight* 1)
   (dolist (parameter parameters)
     (parameter (first parameter) (second parameter))))
 
@@ -294,6 +313,38 @@ v 1.0.2
          (let ((decision (behavior-model :delay delay :trace trace)))
            (when trace (format t "DECISION: ~S~%" decision))
            decision))))
+
+;;; model #4: trust calibration
+;;; ad hoc version of similarity learning and structural matching
+
+(defun learn-similarity (instance &key (trace t))
+  "Similarity can be learned from evacuation order and own choice or landing outcome (counterfactual).
+   Going with the latter to prevent degenrate behavior since no other decision criteria in this model."
+  (let* ((evacuation (get-attribute 'evacuation instance))
+         (decision (get-attribute 'decision instance))
+         (landing (get-attribute 'landing instance))
+         (damage (get-attribute 'damage instance))
+         (weight 1)
+         (outcome (decision-utility decision landing damage))) ;;; move utility computation to separate function
+    (setf instance (append instance (list (list 'outcome outcome)))) ;;; adds utility
+    (setf *evacuation-similarity* (/ (+ (* *evacuation-weight* *evacuation-similarity*)
+                                        (* weight (if (or (and (eq evacuation 'yes) (> landing 0.5))
+                                                          (and (eq evacuation 'no) (< landing 0.5))) 0 -1))) ;;; if outcome is same as order then max otherwise min similarity
+                                     (+ *evacuation-weight* weight)))
+    (incf *evacuation-weight* weight)
+    (when trace (format t "LEARNING SIMILARITY ~6,3F~CWEIGHT ~D~%" *evacuation-similarity* #\tab *evacuation-weight*))
+    instance))
+
+(defun trust-calibration (stimulus &key (instance nil) (delay *delay*) (trace t))
+  "Make decision based on similarity between self and authority."
+  (actr-time delay)
+  (if instance
+      (learn-similarity instance :trace trace)
+      (let* ((evacuation (get-attribute 'evacuation stimulus))
+             (decision (if (> *evacuation-similarity* *evacuation-threshold*) evacuation ;;; if similarity above threshold follow order
+                           (if (eq evacuation 'yes) 'no 'yes)))) ;;; otherwise do the opposite
+        (when trace (format t "EVACUATE: ~6,3F~CDECISION: ~S~%" evacuation #\tab decision))
+        decision)))
 
 ;;; simulation
 
@@ -563,6 +614,13 @@ v 1.0.2
 0.52
 #(0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)
 #(0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)
-
+;;; v 1.0.3
+? (evaluate (simulate :runs 1 :length 100 :probability-threshold 0.25 :intensity-threshold 1 :decision-function 'trust-calibration))
+0.62
+1.0
+0.49
+0.59
+#(1 1 1 1 0 1 1 0 1 1 0 1 1 0 1 1 0 1 1 1 0 1 1 1 0 1 1 0 1 1 1 0 1 1 1 0 1 0 0 1 0 0 1 1 1 1 1 1 0 0 1 1 0 1 1 0 1 1 1 0 1 1 1 1 0 0 1 0 1 0 0 0 1 1 0 1 1 0 0 1 1 1 0 0 1 1 1 0 1 0 1 0 0 1 1 0 0 1 0 0)
+#(1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1)
 
 |#
