@@ -94,9 +94,18 @@ v 1.0.3
 - add learn-similarity function to learn evaucation similarity in trust calibration model
 - add trust-calibration function that implements ad hoc version of trust calibration model
 
+v 1.0.4
+
+9/15/25:
+
+- set learn-trust and learn-control functions to learn from outcome rather than decision
+- add *trial* variable to tag intentions by trial to avoid interference and initialize it in init-model
+- add trial slot to intentions in trust-model, control-model, and outcome-model
+- increment *trial* in theory-planned-behavior
+
 |#
 
-(defparameter *evacuation-model-version* "1.0.3")
+(defparameter *evacuation-model-version* "1.0.4")
 
 (format t "Loading evacuation model version ~S~%" *evacuation-model-version*)
 
@@ -133,6 +142,9 @@ v 1.0.3
 ;;; initial evacuation weight in trust calibration model
 (defparameter *evacuation-weight* 1)
 
+;;; trial number for intentions in TPB
+(defparameter *trial* 1)
+
 (defun init-model (&optional (parameters nil))
   (init-memory)
   (init-similarities)
@@ -141,6 +153,7 @@ v 1.0.3
   (similarity 'no 'yes -1.0)
   (setf *evacuation-similarity* -0.5)
   (setf *evacuation-weight* 1)
+  (setf *trial* 1)
   (dolist (parameter parameters)
     (parameter (first parameter) (second parameter))))
 
@@ -202,16 +215,16 @@ v 1.0.3
   "Generate trust-based intention based on evacuation recommendation by blending (or retrieving) past trust instances. Adds delay first."
   (actr-time delay)
   (let* ((decision (blend-vote stimulus 'decision))  ;;; could be standard retrieval
-         (intention `((intention ,decision)))) 
+         (intention `((trial ,*trial*) (intention ,decision)))) 
     (when trace (format t "TRUST DECISION~C~S~C~S~%" #\tab stimulus #\tab intention))
     (learn intention) ;;; learns intention
     intention))
 
 (defun learn-trust (instance &key (trace t))
-  "Learn instance linking evacuation recommendation to eventual decision/behavior."
-  (let* ((decision (get-attribute 'decision instance))
+  "Learn instance linking evacuation recommendation to eventual outcome."
+  (let* ((landing (get-attribute 'landing instance))
          (evacuation (get-attribute 'evacuation instance))
-         (instance (list (list 'evacuation evacuation) (list 'decision decision))))
+         (instance (list (list 'evacuation evacuation) (list 'decision (if (> landing 0.5) 'yes 'no))))) ;;; trust from outcome
     (when trace (format t "TRUST LEARNING~C~S~%" #\tab instance))
     (learn instance) ;;; learns new instance
     instance))
@@ -223,17 +236,17 @@ v 1.0.3
   "Generate control-based intention based on features like probability and intensity by blending (or retrieving) past control instances. Adds delay first."
   (actr-time delay)
   (let* ((decision (blend-vote stimulus 'decision))  ;;; could be partial matching
-         (intention `((intention ,decision)))) 
+         (intention `((trial ,*trial*) (intention ,decision)))) 
     (when trace (format t "CONTROL DECISION~C~S~C~S~%" #\tab stimulus #\tab intention))
     (learn intention) ;;; learns intention
     intention))
 
 (defun learn-control (instance &key (trace t))
   "Learn instance linking features like probability and intensity to eventual decision/behavior."
-  (let* ((decision (get-attribute 'decision instance))
+  (let* ((landing (get-attribute 'landing instance))
          (probability (get-attribute 'probability instance))
          (intensity (get-attribute 'intensity instance))
-         (instance (list (list 'probability probability) (list 'intensity intensity) (list 'decision decision))))
+         (instance (list (list 'probability probability) (list 'intensity intensity) (list 'decision (if (> landing 0.5) 'yes 'no))))) ;;; control to outcome
     (when trace (format t "CONTROL LEARNING~C~S~%" #\tab instance))
     (learn instance) ;;; learns new instance
     instance))
@@ -251,7 +264,7 @@ v 1.0.3
       (let ((utility (blend (list (list 'decision decision)) 'outcome)))
         (when (or (null intention) (> utility best-utility))
           (setf best-utility utility)
-          (setf intention `((intention ,decision))))))
+          (setf intention `((trial ,*trial*) (intention ,decision))))))
     (when trace (format t "OUTCOME DECISION~C~S~C~S~%" #\tab stimulus #\tab intention))
     (learn intention) ;;; learns intention
     intention))
@@ -269,7 +282,7 @@ v 1.0.3
       (let ((utility (blend (append stimulus `((decision ,decision) (landing ,landing) (damage ,damage))) 'utility)))
         (when (or (null intention) (> utility best-utility))
           (setf best-utility utility)
-          (setf intention `((intention ,decision))))))
+          (setf intention `((trial ,*trial*) (intention ,decision))))))
     (when trace (format t "OUTCOME DECISION~C~S~C~S~%" #\tab stimulus #\tab intention))
     (learn intention) ;;; learns intention
     intention))
@@ -291,7 +304,8 @@ v 1.0.3
 (defun behavior-model (&key (delay *delay*) (trace t))
   "Generate behavior from most active intention in memory. No input. Could be more complex Adds delay first/"
   (actr-time delay)
-  (let ((behavior (retrieve `((intention any)) :mode 'partial))) ;;; no real matching - just specifying type
+  (let ((behavior (attribute (retrieve `((trial ,*trial*))) 'intention))) ;;; matching to trial to prevent interference
+;  (let ((behavior (blend-vote nil 'intention))) ;;; use blend vote to merge across intentions if needed
     (when trace (format t "BEHAVIOR DECISION~C~S~%" #\tab behavior))
     behavior))
 
@@ -301,6 +315,8 @@ v 1.0.3
   "Make decision based on stimulus by directly projecting outcome (utility) for each action and choosing the best."
   (actr-time delay)
   (cond (instance
+         ;;; increment trial
+         (incf *trial*)
          ;;; calls model learning functions - do filtering in learning function - return last instance
          (learn-trust instance :trace trace)
          (learn-control instance :trace trace)
@@ -465,6 +481,10 @@ v 1.0.3
             (float (/ (reduce #'+ accuracies) runs trials))
             evacuations agreements)))
 
+(defun print-sequence (sequence)
+    (dotimes (index (length sequence))
+      (format t "~S~%" (elt sequence index))))
+
 (defun run-batch (&key (samples 100) (decision-function 'model-free-decision) (probability-thresholds '(0.0 0.1 0.25 0.35 0.5)) (intensity-thresholds '(0 1 2 3)))
   "Runs a batch of samples with model-free-decision sweeping probability and utility thresholds."
   (let ((probability-threshold *probability-threshold*)
@@ -615,6 +635,7 @@ v 1.0.3
 #(0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)
 #(0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)
 ;;; v 1.0.3
+;;; trust-calibration results
 ? (evaluate (simulate :runs 1 :length 100 :probability-threshold 0.25 :intensity-threshold 1 :decision-function 'trust-calibration))
 0.62
 1.0
@@ -622,5 +643,69 @@ v 1.0.3
 0.59
 #(1 1 1 1 0 1 1 0 1 1 0 1 1 0 1 1 0 1 1 1 0 1 1 1 0 1 1 0 1 1 1 0 1 1 1 0 1 0 0 1 0 0 1 1 1 1 1 1 0 0 1 1 0 1 1 0 1 1 1 0 1 1 1 1 0 0 1 0 1 0 0 0 1 1 0 1 1 0 0 1 1 1 0 0 1 1 1 0 1 0 1 0 0 1 1 0 0 1 0 0)
 #(1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1)
+? (evaluate (simulate :runs 100 :length 100 :probability-threshold 0.25 :intensity-threshold 1 :decision-function 'trust-calibration))
+0.619
+0.9726
+1.1842
+0.6526
+#(60 61 56 51 55 68 61 59 50 73 62 65 61 54 57 64 56 62 61 66 61 65 74 54 59 60 69 61 61 66 63 63 71 63 61 59 62 60 62 58 70 64 63 55 66 62 66 69 63 59 57 61 57 60 65 64 64 56 65 64 66 60 63 62 67 60 60 60 51 64 55 68 72 54 63 69 67 63 69 62 58 63 64 58 68 64 55 64 59 67 57 64 61 59 63 59 62 57 64 65)
+#(73 85 84 85 85 87 84 89 87 87 87 94 91 96 95 97 95 96 94 96 95 96 95 97 97 97 97 97 97 99 98 99 99 99 98 98 98 100 99 100 99 99 100 99 99 99 99 99 99 99 99 100 100 100 100 100 100 100 100 100 100 100 100 100 100 100 100 100 100 100 100 100 99 99 99 100 100 100 99 99 99 100 100 100 100 100 100 100 100 100 100 100 100 100 100 100 100 100 100 100)
+? *evacuation-threshold* 
+-0.5
+? (setf *evacuation-threshold* -0.25)
+-0.25
+? (evaluate (simulate :runs 100 :length 100 :probability-threshold 0.25 :intensity-threshold 1 :decision-function 'trust-calibration))
+0.3927
+0.067
+-1.1037
+0.3603
+#(44 44 39 43 47 39 51 43 38 52 40 49 47 37 40 39 37 40 36 32 42 35 29 40 37 44 35 40 39 46 41 50 42 40 38 39 47 36 43 41 44 34 35 43 34 39 38 39 37 40 43 40 47 45 30 34 32 42 42 34 38 35 41 36 45 46 34 37 30 36 37 36 43 34 36 32 44 43 36 34 39 42 42 36 39 49 35 36 32 36 35 38 35 35 37 41 31 33 39 51)
+#(23 16 10 7 20 20 14 10 16 14 13 10 18 15 12 12 17 14 12 11 15 12 8 6 14 13 9 8 13 11 10 7 10 7 4 4 8 6 3 3 8 7 7 4 7 6 4 4 9 6 5 5 8 8 7 5 6 6 4 3 5 5 4 2 6 5 5 5 6 4 3 3 6 4 3 0 3 3 2 1 3 3 2 2 2 1 1 1 1 0 0 1 1 1 1 1 0 0 0 0)
+? (setf *evacuation-threshold* -0.4)
+-0.4
+? (evaluate (simulate :runs 100 :length 100 :probability-threshold 0.25 :intensity-threshold 1 :decision-function 'trust-calibration))
+0.5671
+0.7893
+0.6428
+0.5813
+#(53 49 56 50 56 47 59 45 67 46 55 58 47 63 42 51 59 49 50 58 51 60 58 67 56 53 52 56 60 57 50 58 54 58 55 61 55 52 59 61 57 49 61 56 51 61 61 49 58 57 50 53 58 60 46 50 66 58 56 63 61 53 65 58 58 56 60 65 60 64 55 55 51 57 60 54 53 59 64 68 49 62 61 63 58 58 65 58 58 55 57 61 55 53 57 51 70 62 64 65)
+#(53 69 61 74 64 57 78 72 84 77 68 75 70 79 72 65 82 71 80 74 68 80 76 80 74 70 76 73 82 74 69 78 73 83 75 68 76 74 78 75 74 79 74 79 78 77 82 79 85 80 77 82 79 82 80 79 81 79 85 83 80 84 82 82 82 81 83 81 85 81 78 84 78 82 82 80 83 83 88 85 85 88 85 89 85 83 87 86 89 87 85 88 87 88 85 84 86 86 89 86)
+? (setf *evacuation-threshold* -0.35)
+-0.35
+? (evaluate (simulate :runs 100 :length 100 :probability-threshold 0.25 :intensity-threshold 1 :decision-function 'trust-calibration))
+0.5061
+0.506
+0.01
+0.496
+#(43 47 54 59 51 51 48 54 51 53 51 50 45 49 52 47 45 65 56 44 52 53 55 57 49 56 52 54 58 58 55 49 53 55 47 47 52 52 52 51 41 50 53 48 49 57 47 44 47 46 51 52 48 56 56 47 49 50 47 40 47 51 45 45 45 47 45 44 51 54 44 56 51 47 55 48 43 59 48 49 54 48 55 48 44 52 52 56 54 56 51 51 50 55 56 55 52 55 44 49)
+#(60 55 66 58 50 65 53 47 63 53 45 62 49 43 55 49 48 59 52 50 55 50 63 59 49 60 53 50 55 52 46 53 50 45 54 47 43 51 42 38 49 44 51 47 43 52 49 44 53 48 43 49 47 46 53 48 46 47 43 42 44 43 53 50 44 54 50 44 55 51 43 53 51 46 50 49 45 49 47 52 51 47 56 53 50 56 52 49 54 50 50 55 51 49 56 54 50 56 55 52)
+? (setf *evacuation-threshold* -0.30)
+-0.3
+? (evaluate (simulate :runs 100 :length 100 :probability-threshold 0.25 :intensity-threshold 1 :decision-function 'trust-calibration))
+0.4386
+0.2343
+-0.6534
+0.4145
+#(46 38 44 47 52 41 42 37 47 42 51 49 47 44 39 38 52 42 45 51 48 46 53 53 42 49 39 41 47 42 48 36 45 38 44 46 41 52 40 44 49 46 42 50 42 43 38 42 43 49 48 49 39 39 46 41 53 41 45 45 44 49 50 50 45 46 44 39 44 42 43 30 41 47 38 50 50 42 47 39 39 40 32 35 34 40 45 45 42 42 38 37 51 41 45 42 44 42 47 47)
+#(24 42 34 30 22 41 31 22 33 29 25 40 30 27 27 36 31 26 34 32 26 35 29 25 23 31 26 24 30 28 25 33 30 26 22 28 25 25 27 27 26 34 28 25 24 27 25 21 24 21 18 26 23 22 18 20 19 18 21 20 19 27 25 20 22 21 18 17 21 20 18 19 18 16 16 19 18 15 21 20 19 21 20 16 19 19 18 15 17 16 14 17 15 13 17 15 14 12 20 15)
+? (setf *evacuation-threshold* -0.45)
+-0.45
+? (evaluate (simulate :runs 100 :length 100 :probability-threshold 0.25 :intensity-threshold 1 :decision-function 'trust-calibration))
+0.6139
+0.9226
+1.0449
+0.6291
+#(46 59 59 58 48 60 58 60 63 56 58 57 61 61 61 59 60 64 62 59 61 67 65 57 62 68 63 55 60 58 64 66 58 57 61 61 60 71 61 69 57 69 59 52 67 65 66 62 60 57 59 58 62 65 60 66 55 62 63 69 63 59 56 64 61 60 65 57 61 58 66 65 64 61 63 73 65 72 65 62 64 65 60 62 62 68 60 62 67 66 64 60 65 53 58 59 62 58 55 63)
+#(80 76 82 78 85 77 83 80 86 83 78 84 80 90 88 90 86 88 88 86 91 86 91 88 93 91 94 91 92 90 88 90 88 93 92 94 92 96 93 92 94 93 95 93 95 92 93 92 93 92 91 94 92 92 92 93 92 94 92 90 94 92 95 92 95 94 97 95 99 98 97 98 95 97 96 98 98 98 98 98 98 98 98 98 98 98 98 97 97 97 97 98 97 98 98 98 98 98 98 98)
+;;; v 1.0.4
+;;; Theory-planned-behavior model
+? (evaluate (simulate :runs 100 :length 100 :probability-threshold 0.25 :intensity-threshold 1 :decision-function 'theory-planned-behavior))
+0.4993
+0.5025
+-0.0283
+0.4967
+#(50 51 50 46 48 47 52 51 49 49 47 52 51 50 50 50 50 51 50 50 49 50 49 51 52 51 50 49 49 50 50 50 49 50 50 50 50 50 50 50 50 50 50 50 50 50 50 50 50 50 50 50 50 50 50 50 50 50 50 50 50 50 50 49 50 50 50 50 50 50 50 50 50 50 50 50 50 50 50 50 50 50 50 50 50 50 50 50 50 50 50 50 51 50 50 50 50 50 50 50)
+#(49 55 47 58 49 59 55 51 58 47 49 46 60 53 56 49 46 49 56 56 46 56 49 55 43 59 51 48 52 45 50 41 47 47 55 55 51 49 47 49 57 54 47 45 44 47 52 46 51 49 49 48 48 54 39 59 57 53 47 45 49 45 46 52 51 51 54 43 48 50 51 50 48 46 53 54 49 54 55 44 50 46 53 49 55 54 48 52 45 54 53 45 60 45 47 47 55 48 49 43)
+
 
 |#
