@@ -1,6 +1,6 @@
 # SCALE project ACT-UP model
 
-This is the initial pass at the ACT-UP model for the SCALE project.
+This encapsulatesthe ACT-UP model for the SCALE project.
 The model is exposed as a TCP server: the reasoner should pass data to the ACT-UP model, and synchronously read a return value from it.
 In particular, the reasoner should open a TCP connection to the model, and send line delimited JSON through
 this TCP connection as UTF-8 text, one request per line, and read line delimited JSON back, again one
@@ -44,6 +44,14 @@ Thus, you can get the `:value` of the `:noise` parameter by doing
 Note that the `:similarity` and `:utility` parameters are handled slightly specially: their `:value`s are p-lists, mapping a keyword version of the type (*e.g.* `:integeer` or `:double`) to a Lisp symbol interned from the string provided in the JSON. By default these symbols are interned in the `CL-USER` package, but if desired this can be changed
 by setting the value of the `scale:*data--name-package*` variable to a different package name. `CL-USER` was chosen on the assumption that's where
 Christian will be working.
+
+In addition the :processes keyword in the `parameters` alist simply maps that keyword to a list of lists, forms read from files in `theprocess/` directory, which define processes used by the model.
+In the JSON supplied `:processes` should map to a list of strings, the names of process files, which should contain Lisp code.
+For each such file name if it contains no extension (*i.e.* does not contain a period character, '.', a `.lisp` extension is appended.
+When reading forms from these files any symbols without a package explicitly specified will be read in the package specified by `*data-name-package*`, which is `COMMON-LISP-USER` by default.
+Note that this behavior is subtlely different than calling `load` on the file. For example any `in-package` forms are simply read and returned without being acted upon,
+and `eval-when` forms are unlikely to have the expected behavior.
+Note that if the designated process file does not exist and error string will be returned (see below) without attempting to run the model.
 
 However, the *first* element of the `parameters` a-list always maps the keyword `:name` to a list whose sole element is a keyword denoting the model name. *E.g.* `(:name MODEL-FREE-DECISION)`.
 The JSON string for the model's name is converted to a symbol (again in the packaged denoted by `scale:*data--name-package*`), upcased with camel-case boundaries and spaces converted to hyophens.
@@ -124,6 +132,7 @@ with all non-ACT-R models have a value of JSON `null`.
 ## Running this code
 
 If you don't want to install things on your machine you can also use a Docker container to run it, as described near the end of this document.
+Note that when using the Docker version the various process files must be added to the `processes/` directory before building the container from the Dockerfile.
 
 To run this a suitable Common Lisp implementation (SBCL is recommended) and QuickLisp must be installed.
 Installing SBCL is easy on a variety of OSes, so long as a pre-built binary is used.

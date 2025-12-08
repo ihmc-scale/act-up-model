@@ -20,6 +20,7 @@ RUN sbcl --quit --load quicklisp.lisp --eval '(quicklisp-quickstart:install :pat
 RUN rm quicklisp.lisp
 
 # copy the relevant code and default return data
+COPY processses ./processes
 COPY act-up-v1_3_2.lisp ./act-up-v1_3_2.lisp
 COPY evacuation-model-v1.0.4.lisp ./evacuation-model-v1.0.4.lisp
 COPY model-server.lisp ./model-server.lisp
