@@ -23,7 +23,7 @@
 
 (define-constant +process-directory+ (merge-pathnames "processes/" *load-pathname*) :test #'equal)
 
-(defparameter *data-name-package* 'CL-USER)
+(defparameter *data-name-package* (find-package :cl-user))
 
 (defun %run-model (parameters raw-data)
   (vom:debug "Calling model on ~S ~S" parameters raw-data)
@@ -93,7 +93,7 @@
   (let ((json (decode-json-from-string line)))
     (vom:debug "Processing JSON ~S" json)
     (assert (listp json))
-    (let ((proc (read-process-files (cdr (assoc :process json)))))
+    (let ((proc (read-process-files (cdr (assoc :processes json)))))
       (setf json (cdr (assoc :models json)))
       (assert (listp json))
       (vom:debug "Processing models ~S" json)
