@@ -52,6 +52,7 @@ When reading forms from these files any symbols without a package explicitly spe
 Note that this behavior is subtlely different than calling `load` on the file. For example any `in-package` forms are simply read and returned without being acted upon,
 and `eval-when` forms are unlikely to have the expected behavior.
 Note that if the designated process file does not exist and error string will be returned (see below) without attempting to run the model.
+If no process filenames are supplied the `:processes` element of the alist maps to `nil`.`
 
 However, the *first* element of the `parameters` a-list always maps the keyword `:name` to a list whose sole element is a keyword denoting the model name. *E.g.* `(:name MODEL-FREE-DECISION)`.
 The JSON string for the model's name is converted to a symbol (again in the packaged denoted by `scale:*data--name-package*`), upcased with camel-case boundaries and spaces converted to hyophens.
