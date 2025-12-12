@@ -102,7 +102,7 @@
             (for (values runs behavior-name) := (multiple-value-bind (params raw-data)
                                                     (restructure-input m)
                                                   (%run-model `((:name ,model-name)
-                                                                (:processes ,@proc)
+                                                                (:processes ,proc)
                                                                 ,@params)
                                                               raw-data)))
             (collect (if runs

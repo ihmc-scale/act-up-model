@@ -1,6 +1,6 @@
 # SCALE project ACT-UP model
 
-This encapsulatesthe ACT-UP model for the SCALE project.
+This encapsula testhe ACT-UP model for the SCALE project.
 The model is exposed as a TCP server: the reasoner should pass data to the ACT-UP model, and synchronously read a return value from it.
 In particular, the reasoner should open a TCP connection to the model, and send line delimited JSON through
 this TCP connection as UTF-8 text, one request per line, and read line delimited JSON back, again one
