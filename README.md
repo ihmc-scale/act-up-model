@@ -212,3 +212,23 @@ Then run
 And in a different shell,
 
     (dfm) dfm@carlisle:~/w/scale/act-up-interface$ cat input-sample.json | nc localhost 21952 >/tmp/output.json
+
+If you are running Windows, netcat can be installed [HERE](https://nmap.org/ncat/).
+When installed, ensure nmap is in environmental variables PATH.
+
+Restart Bash and check version.
+```bash
+which ncat
+ncat --version
+```
+
+Output should be similar to:
+
+```text
+/c/Program Files (x86)/Nmap/ncat
+Ncat: Version 7.98 ( https://nmap.org/ncat )
+```
+You can then run the script, which will use the example outlined above (input-sample.json -> output.json) to test the TCP connection from Docker.
+```bash
+./test-docker.sh
+```

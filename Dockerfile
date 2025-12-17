@@ -20,7 +20,7 @@ RUN sbcl --quit --load quicklisp.lisp --eval '(quicklisp-quickstart:install :pat
 RUN rm quicklisp.lisp
 
 # copy the relevant code and default return data
-COPY processses ./processes
+COPY processes ./processes
 COPY act-up-v1_3_2.lisp ./act-up-v1_3_2.lisp
 COPY evacuation-model-v1.0.4.lisp ./evacuation-model-v1.0.4.lisp
 COPY model-server.lisp ./model-server.lisp
@@ -30,4 +30,4 @@ RUN chmod a+x docker-entrypoint.sh
 # get the dependencies compiled
 RUN sbcl --load quicklisp/setup.lisp --load act-up-v1_3_2 --load 'evacuation-model-v1.0.4.lisp' --load model-server.lisp --eval '(sb-ext:exit)'
 
-ENTRYPOINT [ "./docker-entrypoint.sh" ]
+ENTRYPOINT ["sh", "./docker-entrypoint.sh" ]
