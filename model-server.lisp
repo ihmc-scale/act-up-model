@@ -82,12 +82,14 @@
 (defun read-process-files (list)
   (iter (for fname :in list)
         (unless (find #\. fname)
-          (setf fname #?"${fname}.lisp"))
-        (collect (with-open-file (s (merge-pathnames fname +process-directory+))
-                   (iter (with *package* := *data-name-package*)
-                         (for form := (read s nil '#0=#:eof))
-                         (until (eq form '#0#))
-                         (collect form))))))
+          (setf fname (format nil "~a.lisp" fname)))
+        (collect
+         (with-open-file (s (merge-pathnames fname +process-directory+))
+           (iter (with *package* := *data-name-package*)
+                 (for form := (read s nil :eof))
+                 (until (eq form :eof))
+                 (collect form))))))
+
 
 (defun handle-line (line)
   (let ((json (decode-json-from-string line)))
@@ -119,18 +121,21 @@
 
 (defun tcp-handler (stream)
   (vom:info "Connected from ~A" *remote-host*)
-  (iter (for line := (read-line stream nil '#0=#:eof))
+  (iter (for line := (read-line stream nil :eof))
         (vom:debug "Read line ~S" line)
-        (until (eq line '#0#))
-        (format stream "~A~%" (handler-case (handle-line line)
-                                ((and error #+SBCL (not sb-sys:interactive-interrupt)) (e)
-                                  (vom:error "~A (while processing ~S)" e line)
-                                  (format stream "Error: ~A~%"  e)
-                                  (finish-output stream)
-                                  (next-iteration))))
-        (finish-output stream))
+        (until (eq line :eof))
+        (format stream "~A~%"
+                (handler-case
+                    (handle-line line)
+                  ((and error #+SBCL (not sb-sys:interactive-interrupt)) (e)
+                    (vom:error "~A (while processing ~S)" e line)
+                    (format stream "Error: ~A~%" e)
+                    (finish-output stream)
+                    (next-iteration)))))
+  (finish-output stream)
   #+SBCL (sb-ext:gc :full t)
   (vom:info "Finished from ~A" *remote-host*))
+
 
 (defun run (&optional(interactive (member :swank *features*)) (port +default-port+))
   (vom:info "Starting SCALE model listener on port ~D" port)
