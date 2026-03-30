@@ -1,6 +1,6 @@
-;;;; Copyright 2025 Carnegie Mellon University
+;;;; Copyright 2025-2026 Carnegie Mellon University
 
-(ql:quickload '(:cl-interpol :alexandria :iterate :cl-json
+(ql:quickload '(:cl-interpol :alexandria :iterate :com.inuoe.jzon
                 :bordeaux-threads :usocket :uiop :vom)
               :silent t)
 
@@ -8,23 +8,34 @@
 
 (defpackage :scale-act-up-interface
   (:nicknames :scale)
-  (:use :common-lisp :alexandria :iterate :json :usocket)
-  (:export #:run #:*data-name-package*))
+  (:use :common-lisp :alexandria :iterate :usocket)
+  (:local-nicknames (:jzon :com.inuoe.jzon) (:v :vom))
+  (:import-from common-lisp-user #:run-model #:yes #:no)
+  (:export #:run))
 
 (in-package :scale)
 
-(vom:config t :info)
-
-#+SBCL (setf (sb-ext:gc-logfile) "gc.log")
+(v:config t :info)
 
 (define-constant +default-port+ 21952)
+(define-constant +model-package+ (find-package 'common-lisp-user))
 
-(define-constant +default-behavior-name+ "evacuate/stay" :test #'string-equal)
+(defun symbolify (string &optional (keyword t))
+  (intern (substitute-if #\- (rcurry #'find "_ ") (string-upcase string))
+          (if keyword 'keyword +model-package+)))
 
-(define-constant +process-directory+ (merge-pathnames "processes/" *load-pathname*) :test #'equal)
+(defparameter *intern-items* '("yes" "no" "evac" "stay"))
 
-(defparameter *data-name-package* (find-package :cl-user))
+(defun listify-jzon (jzon)
+  (cond ((member jzon *intern-items* :test #'equalp) (symbolify jzon nil))
+        ((stringp jzon) jzon)
+        ((vectorp jzon) (map 'list #'listify-jzon jzon))
+        ((hash-table-p jzon) (iter (for (k v) :in-hash-table jzon)
+                                   (collect (list (symbolify k) (listify-jzon v)))))
+        ((floatp jzon) (coerce jzon *read-default-float-format*))
+        (t jzon)))
 
+<<<<<<< HEAD
 (defun %run-model (parameters raw-data)
   (vom:debug "Calling model on ~S ~S" parameters raw-data)
   (multiple-value-bind (result name)
@@ -90,36 +101,23 @@
                  (until (eq form :eof))
                  (collect form))))))
 
+=======
+(defun read-json (string)
+  (let* ((result (listify-jzon (jzon:parse string)))
+         (processes (assoc :processes result)))
+    (when processes
+      (setf (second processes) (mapcar (rcurry #'symbolify nil) (second processes))))
+    result))
+>>>>>>> 28d73dc (latest ACT-Up stuff and model from Christian; simplify model-server code to match)
 
 (defun handle-line (line)
-  (let ((json (decode-json-from-string line)))
+  (let ((json (read-json line)))
     (vom:debug "Processing JSON ~S" json)
     (assert (listp json))
-    (let ((proc (read-process-files (cdr (assoc :processes json)))))
-      (setf json (cdr (assoc :models json)))
-      (assert (listp json))
-      (vom:debug "Processing models ~S" json)
-      (iter (for m :in json)
-            (for model-name := (model-name-to-lisp (cdr (assoc :name m))))
-            (for (values runs behavior-name) := (multiple-value-bind (params raw-data)
-                                                    (restructure-input m)
-                                                  (%run-model `((:name ,model-name)
-                                                                (:processes ,proc)
-                                                                ,@params)
-                                                              raw-data)))
-            (collect (if runs
-                         `((:name . ,model-name)
-                           (:behavior . #(((:name . ,(or behavior-name +default-behavior-name+))
-                                           (:runs ,@(restructure-output runs))))))
-                         (make-hash-table))
-                     :into results)
-            (finally (let ((result `((:models . #(,@results)))))
-                       (vom:debug "Encoding ~S" result)
-                       (let ((encoded-result (encode-json-to-string result)))
-                         (vom:debug "Returning ~S" encoded-result)
-                         (return encoded-result))))))))
+    "return value"))
 
 (defun tcp-handler (stream)
+<<<<<<< HEAD
   (vom:info "Connected from ~A" *remote-host*)
   (iter (for line := (read-line stream nil :eof))
         (vom:debug "Read line ~S" line)
@@ -133,21 +131,44 @@
                     (finish-output stream)
                     (next-iteration)))))
   (finish-output stream)
+=======
+  (v:info "Connected from ~A" *remote-host*)
+  (iter (for line := (read-line stream nil '#0=#:eof))
+        (v:debug "Read line ~S" line)
+        (until (eq line '#0#))
+        (format stream "~A~%" (handler-case (handle-line line)
+                                ((and error #+SBCL (not sb-sys:interactive-interrupt)) (e)
+                                  (v:error "~A (while processing ~S)" e line)
+                                  (format stream "Error: ~A~%"  e)
+                                  (finish-output stream)
+                                  (next-iteration))))
+        (finish-output stream))
+>>>>>>> 28d73dc (latest ACT-Up stuff and model from Christian; simplify model-server code to match)
   #+SBCL (sb-ext:gc :full t)
-  (vom:info "Finished from ~A" *remote-host*))
+  (v:info "Finished from ~A" *remote-host*))
 
 
 (defun run (&optional(interactive (member :swank *features*)) (port +default-port+))
-  (vom:info "Starting SCALE model listener on port ~D" port)
+  (v:info "Starting SCALE model listener on port ~D" port)
   (labels ((quit (n)
              (unless interactive
                (uiop:quit n))))
     (handler-case (socket-server nil port 'tcp-handler)
       (error (e)
-        (vom:error "top level error ~S" e)
+        (v:error "top level error ~S" e)
         #+SBCL (sb-debug:print-backtrace)
         (quit 1))
       #+SBCL
       (sb-sys:interactive-interrupt ()
-        (vom:info "Stopping SCALE model listener")
+        (v:info "Stopping SCALE model listener")
         (quit 0)))))
+
+
+
+#+nil
+(progn
+  (swank:set-default-directory "/Users/dfm/work/scale/act-up-model")
+  (swank:set-package :cl-user)
+  (in-package :cl-user)
+  (mapc #'load '("act-up-v1_3_3" "ACT-UP procedural module" "evacuation-model-v2.0.lisp" "model-server"))
+  (swank:set-package :scale))

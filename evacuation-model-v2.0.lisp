@@ -103,11 +103,22 @@ v 1.0.4
 - add trial slot to intentions in trust-model, control-model, and outcome-model
 - increment *trial* in theory-planned-behavior
 
+v 2.0
+
+3/23/26
+
+- update run-model to take new parameters and remove raw-data
+- update init-model to include initializing productions
+- add new *utility-parameters* parameter and compute-utility and load-utility functions
+- define new replace-keyword function to process argument values
+- add new functions to load production rules (and chunks if needed) for each basic process
+- add new *goal* variable to hold the current goal chunk and set-goal function to set it
+
 |#
 
-(defparameter *evacuation-model-version* "1.0.4")
+(defparameter *evacuation-model-version* "2.0")
 
-(format t "Loading evacuation model version ~S~%" *evacuation-model-version*)
+(format t "Loading evacuation model version ~A~%" *evacuation-model-version*)
 
 ;;; models
 
@@ -145,15 +156,21 @@ v 1.0.4
 ;;; trial number for intentions in TPB
 (defparameter *trial* 1)
 
+;;; goal chunk
+(defparameter *goal* nil)
+
 (defun init-model (&optional (parameters nil))
+  "Initializing model, including productions."
   (init-memory)
   (init-similarities)
+  (init-productions)
   (setf *similarity-hook-function* 'number-similarity)
   (similarity 'yes 'no -1.0)
   (similarity 'no 'yes -1.0)
   (setf *evacuation-similarity* -0.5)
   (setf *evacuation-weight* 1)
   (setf *trial* 1)
+  (setf *goal* nil)
   (dolist (parameter parameters)
     (parameter (first parameter) (second parameter))))
 
@@ -571,21 +588,187 @@ v 1.0.4
               (push pair parameters))))))))
     
 (defparameter *models* '(model-free-decision model-based-decision theory-planned-behavior trust-calibration))
-    
-(defun run-model (parameters raw-data &key (model-parameters '((:noise :ans) (:temperature :tmp)))
-                             (simulation-parameters '((:run-count :runs) (:run-length :length) (:init-length :init) (:run-delay :delay)
-                                                      (:probability-threshold :probability-threshold)
-                                                      (:intensity-threshold :intensity-threshold)
-                                                      (:intensity-standard-deviation :damage-noise))))
+
+(defun behavioral-utility-encoding ()
+  "generate expected utility."
+  (p evacuate-utility
+     (((probability =probability) (intensity =intensity) (decision nil) (evac-utility nil))
+      ((probability =probability) (intensity =intensity) (decision yes) (utility =evac-utility)))
+     (((evac-utility =evac-utility))))
+   (p stay-utility
+     (((probability =probability) (intensity =intensity) (decision nil) (stay-utility nil))
+      ((probability =probability) (intensity =intensity) (decision no) (utility =stay-utility)))
+     (((stay-utility =stay-utility))))
+  )
+
+(defun behavior-selection-decision ()
+  "select decision based on utility. Match to basic comparison chunks in memory.
+   Generate utility and store chunk."
+   (p decision
+      (((stay-utility =stay-utility) (evac-utility =evac-utility) (decision nil))
+       ((stay-utility =stay-utility) (evac-utility =evac-utility) (decision =decision)))
+      (((decision =decision))))
+  (p utility
+     (((evacuation =evacuation) (decision =decision) (utility nil))
+      ((evacuation =evacuation) (decision =decision) (utility =utility)))
+     (((utility =utility))))
+  )
+
+(defun event-prediction ()
+  "predict outcome of event."
+  (p expected-landing
+     (((probability =probability) (intensity =intensity) (decision nil) (expected-landing nil))
+      ((probability =probability) (intensity =intensity) (expected-landing =expected-landing)))
+     (((expected-landing =expected-landing))))
+  (p expected-damage
+     (((probability =probability) (intensity =intensity) (decision nil) (expected-damage nil))
+      ((probability =probability) (intensity =intensity) (expected-damage =expected-damage)))
+     (((expected-damage =expected-damage))))
+  )
+
+(defun norm-formation ()
+  "generate intention based on trust in recommendation."
+  (p norm
+     (((evacuation =evacuation) (decision nil))
+      ((evacuation =evacuation) (decision =decision)))
+     (((intention =decision))))
+  )
+
+(defun control-formation ()
+  "generate intention based on context features."
+  (p control
+     (((probability =probability) (intensity =intensity) (decision nil))
+      ((probability =probability) (intensity =intensity) (decision =decision)))
+     (((intention =decision))))
+  )
+
+(defun behavior-intention-formation ()
+  "generate behavior based on intention activation. Learn decision based on results."
+  (p behavior
+     (((decision nil))
+      ((intention =decision)))
+     (((decision =decision))))
+  )
+
+(defun load-processes (processes)
+  "Initialize model and load processes. Each process is a function that loads defines chunks and productions."
+  (init-model)
+  (dolist (process processes)
+    (funcall process)))
+
+;;; add new *utility-parameters* parameter and compute-utility function
+
+(defparameter *utility-parameters* '((delta-yy 5) (delta-yn -5) (delta-ny -5) (delta-nn 5)))
+
+(defun compute-utility (evacuation decision &optional (utility-parameters *utility-parameters*))
+  "Generate utility of decision given evacuation recommendation."
+  (if (eq evacuation 'yes)         ;;; if ordered to evacuate
+      (if (eq decision 'yes) (second (assoc 'delta-yy utility-parameters))
+	  (second (assoc 'delta-yn utility-parameters)))
+      (if (eq decision 'yes) (second (assoc 'delta-ny utility-parameters))
+	  (second (assoc 'delta-nn utility-parameters)))))
+
+(defun load-utility (&optional (utility-parameters *utility-parameters*))
+  "Loads chunks for each evacuation and decision combination."
+  (dolist (evacuation '(yes no))
+    (dolist (decision '(yes no))
+      (learn (list (list 'evacuation evacuation) (list 'decision decision)
+		   (list 'utility (compute-utility evacuation decision utility-parameters)))))))
+
+(defun replace-keywords (specification parameter-list)
+  "Replaces keywords appearing in specification with their counterpart in parameter-list."
+  (let ((replacements nil))
+    (dolist (pair specification)
+      (let ((replacement (assoc (first pair) parameter-list)))
+	(push (cons (if replacement (second replacement) (first pair))
+		    (rest pair))
+	      replacements)))
+    (reverse replacements)))
+
+(defun set-goal (goal-spec)
+  "Updates goal using goal-spec."
+  (unless *goal* ;;; if no goal create an empty one
+    (setf *goal* (learn (list (list 'probability nil) (list 'intensity nil) (list 'evacuation nil)
+			      (list 'decision nil) (list 'landing nil) (list 'damage nil)
+			      (list 'utility nil) (list 'stay-utility nil) (list 'evac-utility nil)
+			      (list 'expected-landing nil) (list 'expected-damage nil)))))
+  (dolist (slot-spec goal-spec)
+    (let ((slot-value (assoc (first slot-spec) (chunk-content *goal*))))
+      (if slot-value
+	  (setf (second slot-value) (second slot-spec))
+	  (format t "Unknown slot ~S~%" (first slot-spec)))))
+  *goal*)
+
+(defun slot-difference (start end)
+  "Returns slots and their values that have changed from start to end."
+  (let ((difference-list nil))
+    (dolist (slot-value end)
+      (let ((start-value (assoc (first slot-value) start)))
+	(unless (equal (second slot-value) (second start-value))
+	  (push slot-value difference-list))))
+    difference-list))
+
+(defun run-model (parameters &key (model-parameters '((:noise :ans) (:temperature :tmp) (:decay :bll)))
+			     (chunk-parameters '((:probability probability) (:intensity intensity)
+						 (:evacuation evacuation) (:decision decision)
+						 (:landing landing) (:damage damage) (:utility utility)))
+			     (utility-parameters '((:delta-yy delta-yy) (:delta-yn delta-yn)
+						   (:delta-ny delta-ny) (:delta-nn delta-nn)))
+			     (delta 1.0)
+			     (trace t))
   "Applies parameters then calls simulation then protocol-output to return results."
-  (declare (ignore raw-data)) ;;; not currently using raw data
+  (let ((goal-spec nil))
+    (dolist (parameter parameters)
+      (case (first parameter)
+	(:processes (load-processes (second parameter)))
+	(:history (dolist (chunk (second parameter))
+		    (learn (replace-keywords chunk chunk-parameters))))
+	(:architecture-parameters (dolist (setting (replace-keywords (second parameter) model-parameters))
+				    (parameter (first setting) (second setting))))
+	(:payoff-matrix (load-utility
+			 (setf *utility-parameters* (replace-keywords (second parameter) utility-parameters))))
+	(t (push (replace-keywords parameter chunk-parameters) goal-spec))))
+    (cond (goal-spec
+	     (set-goal goal-spec)
+	     (let ((current-state (chunk-content *goal*)))
+	       (actr-time delta)
+	       (loop
+		 (unless (cycle :trace trace) (return)))
+	       (let ((new-slots (slot-difference current-state (chunk-content *goal*))))
+		 (append new-slots (list (list 'done (if (assoc 'utility new-slots) 'done 'step)))))))
+	  (t
+	   (list (list 'done 'init))))))
+     
+    
+#|
   (let ((translated-parameters (append (list (translate-parameter-list parameters model-parameters))
                                        (translate-parameter-list parameters simulation-parameters :flatten t))))
-    (protocol-output 
+    (protocol-output
+     (case (first (translated-parameters
      (if (eq (first (first parameters)) ':name)
          (when (member (second (first parameters)) *models* :test 'eq) ;;; check model name
            (apply 'simulate :decision-function (second (first parameters)) :parameters translated-parameters))
-         (apply 'simulate :parameters translated-parameters)))))
+       (apply 'simulate :parameters translated-parameters)))))
+|#
+
+#|
+;;;Sample payload
+((:PROCESSES (BEHAVIORAL-UTILITY-ENCODING BEHAVIOR-SELECTION-DECISION))
+ (:HISTORY (((:PROBABILITY 0.497) (:INTENSITY 3) (:EVACUATION YES) (:DECISION YES) (:LANDING 1.0) (:DAMAGE 2) (:UTILITY -4))
+            ((:PROBABILITY 0.497) (:INTENSITY 3) (:EVACUATION YES) (:DECISION YES) (:LANDING 1.0) (:DAMAGE 2) (:UTILITY -4))
+            ((:PROBABILITY 0.497) (:INTENSITY 3) (:EVACUATION YES) (:DECISION YES) (:LANDING 1.0) (:DAMAGE 2) (:UTILITY -4))
+            ((:PROBABILITY 0.497) (:INTENSITY 3) (:EVACUATION YES) (:DECISION YES) (:LANDING 1.0) (:DAMAGE 2) (:UTILITY -4))
+            ((:PROBABILITY 0.497) (:INTENSITY 3) (:EVACUATION YES) (:DECISION YES) (:LANDING 1.0) (:DAMAGE 2) (:UTILITY -4))
+            ((:PROBABILITY 0.497) (:INTENSITY 3) (:EVACUATION YES) (:DECISION YES) (:LANDING 1.0) (:DAMAGE 2) (:UTILITY -4))))
+ (:ARCHITECTURE-PARAMETERS ((:TEMPERATURE 1.2) (:NOISE 0.45) (:DECAY 0.65)))
+ (:PAYOFF-MATRIX ((:DELTA-YY -2) (:DELTA-YN 2) (:DELTA-NY -2) (:DELTA-NN 2))))
+
+((:PROBABILITY 0.5) (:INTENSITY 3))
+
+((:EVACUATION-MESSAGE EVAC))
+
+((:LANDING 1.0) (:DAMAGE 5))
+|#
 
 
 #|

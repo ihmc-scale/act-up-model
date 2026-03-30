@@ -1,0 +1,19 @@
+To integrate new model:
+
+git add new file
+
+git rm old file
+
+update file name in
+  debug.sh
+  docker-entrypoint.sh
+  Dockerfile (three places, two of them on the same line)
+  run.sh
+
+commit and push
+
+pkill the process on Mneme
+
+git pull
+
+restart the process

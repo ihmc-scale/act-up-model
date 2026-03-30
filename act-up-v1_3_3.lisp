@@ -61,7 +61,7 @@ API:
 
 ;;; architectural parameters
 
-(format t "Loading ACT-UP 1.3.2")
+(format t "Loading ACT-UP 1.3.3")
 
 (defvar *time* 0.0)
 
@@ -90,6 +90,8 @@ API:
 
 (defparameter *temperature* 1.0)
 
+(defparameter *latency-factor* 0.25)
+
 (defparameter *similarity-hook-function* nil)
 
 (defparameter *similarity-derivative-function* nil)
@@ -99,7 +101,7 @@ API:
 (defun parameter (name &optional (value :lookup))
   (if (eq value :lookup)
       (case name
-        (:bll *decay*)
+        (:bll *decay*)  
         (:ol *optimized-learning*)
         (:mp *mismatch*)
         (:ms *max-sim*)
@@ -107,6 +109,7 @@ API:
         (:ans *noise*)
         (:rt *threshold*)
         (:tmp *temperature*)
+        (:lf *latency-factor*)
         (:v *verbose*)
         (t (error "Unknown parameter ~S" name)))
       (case name
@@ -118,6 +121,7 @@ API:
         (:ans (setf *noise* value))
         (:rt (setf *threshold* value))
         (:tmp (setf *temperature* value))
+        (:lf (setf *latency-factor* value))
         (:v (setf *verbose* value))
         (t (error "Unknown parameter ~S" name)))
       ))
@@ -211,10 +215,17 @@ API:
     (when trace (format t "Calculating Chunk ~A Activation ~6,3F.~%" (chunk-name chunk) activation))
     activation))
 
+(defun retrieval-latency (activation &optional (trace *verbose*))
+  "Computes the standard retrieval latency function from chunk activation."
+  (let ((latency (* *latency-factor* (exp (- activation)))))
+    (when trace (format t "Latency of chunk activation ~6,3F is ~6,3F~%" activation latency))
+    latency))
+
 (defun partial-match (conditions &optional (memory *memory*) (similarities *similarities*) (trace *verbose*))
   "Returns memory best matching specified conditions."
   (let ((best-chunk nil)
-        (best-activation *threshold*))
+        (best-activation *threshold*)
+        (best-latency 0.0))
     (maphash #'(lambda (name chunk)
                  (let ((slot-match nil)
                        (content (chunk-content chunk))
@@ -232,7 +243,9 @@ API:
                          (setf best-activation activation) ;;; bug fix reported by Pete Pirolli (3/10/22)
                          (setf best-chunk chunk))))))
              memory)
-    (values best-chunk best-activation)))
+    (setf best-latency (retrieval-latency best-activation))
+;    (actr-time best-latency) ;;; do not increment time to keep it backward compatible and allow different event management schemes
+    (values best-chunk best-activation best-latency)))
 
 ;;; Simplified version of blending, adapted from partial match function
 (defun blend (conditions outcome &optional (memory *memory*) (similarities *similarities*) (trace *verbose*))
@@ -404,7 +417,8 @@ API:
 (defun exact-match (conditions &optional (memory *memory*) (trace *verbose*))
   "Returns most active memory exactly matching specified conditions."
   (let ((best-chunk nil)
-        (best-activation *threshold*))
+        (best-activation *threshold*)
+        (best-latency 0.0))
     (maphash #'(lambda (name chunk) (when (subsetp conditions (chunk-content chunk) :test #'equal)
                                       (let ((activation (activation chunk)))
                                         (when trace (format t "Chunk ~A exactly matches to Conditions ~S with activation ~6,3F.~%"
@@ -412,7 +426,9 @@ API:
                                         (when (>= activation best-activation)
                                           (setf best-chunk chunk)
                                           (setf best-activation activation))))) memory)
-    (values best-chunk best-activation)))
+    (setf best-latency (retrieval-latency best-activation))
+;    (actr-time best-latency) ;;; do not increment time to keep it backward compatible and allow different event management schemes
+    (values best-chunk best-activation best-latency)))
 
 (defun perfect-match (conditions &optional (memory *memory*) (trace *verbose*))
   "Returns chunk perfectly matching specified conditions."
