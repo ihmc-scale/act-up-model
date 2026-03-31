@@ -24,6 +24,9 @@
   (intern (substitute-if #\- (rcurry #'find "_ ") (string-upcase string))
           (if keyword 'keyword +model-package+)))
 
+(defun unsymbolify (symbol)
+  (substitute #\_ #\- (string-downcase symbol)))
+
 (defparameter *intern-items* '("yes" "no" "evac" "stay"))
 
 (defun listify-jzon (jzon)
@@ -34,6 +37,22 @@
                                    (collect (list (symbolify k) (listify-jzon v)))))
         ((floatp jzon) (coerce jzon *read-default-float-format*))
         (t jzon)))
+
+(defun jzonify (thing)
+  (cond ((symbolp thing) (unsymbolify thing))
+        ((listp thing)
+         (if (every (lambda (x) (and (consp x)
+                                     (symbolp
+                                      (first x))
+                                     (rest x)
+                                     (null (cddr x))))
+                    thing)
+             (iter (with result := (make-hash-table :test 'equal))
+                   (for (k v) :in thing)
+                   (setf (gethash (unsymbolify k) result) (jzonify v))
+                   (finally (return result)))
+             (map 'vector #'jzonify thing)))
+        (t thing)))
 
 (defun read-json (string)
   (let* ((result (listify-jzon (jzon:parse string)))
