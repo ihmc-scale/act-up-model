@@ -67,7 +67,7 @@
     (assert (listp json))
     (let ((result (run-model json)))
       (v:debug "run-model returned ~S" result)
-      (jzon:stringify result))))
+      (jzon:stringify (jzonify result)))))
 
 (defun tcp-handler (stream)
   (v:info "Connected from ~A" *remote-host*)
