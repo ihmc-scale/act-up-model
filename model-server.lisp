@@ -106,5 +106,5 @@
   (swank:set-default-directory "/Users/dfm/work/scale/act-up-model")
   (swank:set-package :cl-user)
   (in-package :cl-user)
-  (mapc #'load '("act-up-v1_3_3" "ACT-UP procedural module" "evacuation-model-v2.0.lisp" "model-server"))
+  (mapc #'load '("act-up-v1_3_3" "ACT-UP procedural module" "evacuation-model-v2.0.1.lisp" "model-server"))
   (swank:set-package :scale))

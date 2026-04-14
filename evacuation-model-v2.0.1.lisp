@@ -110,13 +110,19 @@ v 2.0
 - update run-model to take new parameters and remove raw-data
 - update init-model to include initializing productions
 - add new *utility-parameters* parameter and compute-utility and load-utility functions
-- define new replace-keyword function to process argument values
+- define new replace-keywords function to process argument values
 - add new functions to load production rules (and chunks if needed) for each basic process
 - add new *goal* variable to hold the current goal chunk and set-goal function to set it
 
+v 2.0.1
+
+4/14/26
+
+- fix the call to replace-keywords for slot-value pairs going to working memory
+
 |#
 
-(defparameter *evacuation-model-version* "2.0")
+(defparameter *evacuation-model-version* "2.0.1")
 
 (format t "Loading evacuation model version ~A~%" *evacuation-model-version*)
 
@@ -727,7 +733,7 @@ v 2.0
 				    (parameter (first setting) (second setting))))
 	(:payoff-matrix (load-utility
 			 (setf *utility-parameters* (replace-keywords (second parameter) utility-parameters))))
-	(t (push (replace-keywords parameter chunk-parameters) goal-spec))))
+	(t (setf goal-spec (append goal-spec (replace-keywords (list parameter) chunk-parameters))))))
     (cond (goal-spec
 	     (set-goal goal-spec)
 	     (let ((current-state (chunk-content *goal*)))

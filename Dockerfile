@@ -1,3 +1,4 @@
+# Copyright Carnegie Mellon University 2025-2026
 # Dockerfile for the interface for the SCALE project's interaction between the reasoner and the ACT-Up model.
 
 FROM ubuntu:22.04
@@ -22,12 +23,12 @@ RUN rm quicklisp.lisp
 # copy the relevant code and default return data
 COPY act-up-v1_3_3.lisp ./act-up-v1_3_3.lisp
 COPY 'ACT-UP procedural module.lisp' './ACT-UP procedural module.lisp'
-COPY evacuation-model-v2.0.lisp ./evacuation-model-v2.0.lisp
+COPY evacuation-model-v2.0.1.lisp ./evacuation-model-v2.0.1.lisp
 COPY model-server.lisp ./model-server.lisp
 COPY docker-entrypoint.sh ./docker-entrypoint.sh
 RUN chmod a+x docker-entrypoint.sh
 
 # get the dependencies compiled
-RUN sbcl --load quicklisp/setup.lisp --load act-up-v1_3_3 --load 'ACT-UP procedural module.lisp' --load 'evacuation-model-v2.0'  --load model-server --eval '(sb-ext:exit)'
+RUN sbcl --load quicklisp/setup.lisp --load act-up-v1_3_3 --load 'ACT-UP procedural module.lisp' --load 'evacuation-model-v2.0.1'  --load model-server --eval '(sb-ext:exit)'
 
 ENTRYPOINT ["sh", "./docker-entrypoint.sh" ]
